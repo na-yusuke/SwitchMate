@@ -1,24 +1,26 @@
 import hashlib
 import ntptime
+import time
 import ubinascii
 import urequests
 import ujson
-import time
 
 from lib.hmac import hmac
-
 from config import SWITCHBOT_BASE_URL, SWITCHBOT_API_TOKEN, SWITCHBOT_API_CLIENT_SECRET, DEBUG
 
 
-class SwitchBotAPI:
+class BaseAPI:
+    """SwitchBot API基底クラス"""
+
     def __init__(self):
         self.base_url = SWITCHBOT_BASE_URL
         self.token = SWITCHBOT_API_TOKEN
         self.secret = SWITCHBOT_API_CLIENT_SECRET
         self.timestamp = ""
-        self.__sync_time()
-    
-    def __sync_time(self):
+        self._sync_time()
+
+    def _sync_time(self):
+        """NTPで時刻同期"""
         try:
             ntptime.settime()
         except:
@@ -34,9 +36,6 @@ class SwitchBotAPI:
     def __generate_headers(self):
         """SwitchBot API用のヘッダーを生成"""
         nonce = ""
-
-        if DEBUG:
-            print(f"Timestamp: {self.timestamp}")
 
         # 署名を生成
         string_to_sign = self.token + self.timestamp + nonce
@@ -57,26 +56,33 @@ class SwitchBotAPI:
             'nonce': nonce
         }
 
-    def get_devices(self):
-        """デバイス一覧を取得"""
+    def __make_request(self, method, endpoint, data=None):
+        """共通のHTTPリクエスト処理"""
         try:
-            url = f"{self.base_url}/devices"
+            url = f"{self.base_url}{endpoint}"
             headers = self.__generate_headers()
 
             if DEBUG:
-                print(f"Requesting: {url}")
+                print(f"Request: {method} {url}")
                 print(f"Headers: {headers}")
+                if data:
+                    print(f"Data: {data}")
 
-            response = urequests.get(url, headers=headers)
+            if method.upper() == 'GET':
+                response = urequests.get(url, headers=headers)
+            elif method.upper() == 'POST':
+                response = urequests.post(url, headers=headers, data=ujson.dumps(data) if data else None)
+            else:
+                raise ValueError(f"Unsupported HTTP method: {method}")
 
             if DEBUG:
                 print(f"Response status: {response.status_code}")
                 print(f"Response text: {response.text}")
 
             if response.status_code == 200:
-                data = ujson.loads(response.text)
+                result = ujson.loads(response.text)
                 response.close()
-                return data
+                return result
             else:
                 if DEBUG:
                     print(f"API Error: {response.status_code}")
@@ -85,43 +91,5 @@ class SwitchBotAPI:
 
         except Exception as e:
             if DEBUG:
-                print(f"Exception in get_devices: {e}")
+                print(f"Exception in __make_request: {e}")
             return None
-
-    def print_devices(self):
-        """デバイス一覧を見やすく表示"""
-        devices_data = self.get_devices()
-
-        if not devices_data:
-            print("Failed to get devices")
-            return
-
-        if 'body' not in devices_data:
-            print("No device data found")
-            return
-
-        body = devices_data['body']
-
-        print("=== SwitchBot Devices ===")
-
-        # 物理デバイス
-        if 'deviceList' in body and body['deviceList']:
-            print("\n[Physical Devices]")
-            for device in body['deviceList']:
-                print(f"- {device.get('deviceName', 'Unknown')} ({device.get('deviceType', 'Unknown')})")
-                print(f"  ID: {device.get('deviceId', 'Unknown')}")
-                if 'hubDeviceId' in device:
-                    print(f"  Hub: {device['hubDeviceId']}")
-                print()
-
-        # 仮想デバイス
-        if 'infraredRemoteList' in body and body['infraredRemoteList']:
-            print("[Virtual Infrared Devices]")
-            for device in body['infraredRemoteList']:
-                print(f"- {device.get('deviceName', 'Unknown')} ({device.get('remoteType', 'Unknown')})")
-                print(f"  ID: {device.get('deviceId', 'Unknown')}")
-                if 'hubDeviceId' in device:
-                    print(f"  Hub: {device['hubDeviceId']}")
-                print()
-
-        print("========================")

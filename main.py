@@ -1,10 +1,15 @@
-from switchbot_api import SwitchBotAPI
-from switchbot_api import SwitchBotAPI
+from switchbot import DeviceAPI
+from config import DEBUG
 
 def main():
-    print("Starting SwitchBot device list retrieval...")
-    switchbot = SwitchBotAPI()
-    switchbot.print_devices()
+    """メイン処理"""
+    if DEBUG:
+        print("Starting SwitchBot API demo...")
+
+    device_api = DeviceAPI()
+    print("=== Retrieving Device List ===")
+    device_api.print_devices()
+
 
 if __name__ == "__main__":
     main()
