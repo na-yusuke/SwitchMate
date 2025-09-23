@@ -1,5 +1,3 @@
-config.py
-
 # Node.js
 node_modules/
 package-lock.json
@@ -25,3 +23,7 @@ Thumbs.db
 
 # ESP32/MicroPython
 *.mpy
+
+# Other
+config.py
+CLAUDE.md

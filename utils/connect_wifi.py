@@ -1,13 +1,16 @@
 import network
 import time
 
+from config import DEBUG
+
 def init_wifi():
     """Wi-Fi初期化とエラーハンドリング"""
     try:
         from config import WIFI_SSID, WIFI_PASSWORD
 
         if connect_wifi(WIFI_SSID, WIFI_PASSWORD):
-            print("Boot sequence completed successfully")
+            if DEBUG:
+                print("Boot sequence completed successfully")
             return True
         else:
             print("Boot sequence failed - Wi-Fi connection error")
