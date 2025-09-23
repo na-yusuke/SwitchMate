@@ -4,7 +4,7 @@ import time
 from config import DEBUG
 
 def init_wifi():
-    """Wi-Fi初期化とエラーハンドリング"""
+    """Wi-Fi初期化"""
     try:
         from config import WIFI_SSID, WIFI_PASSWORD
 
