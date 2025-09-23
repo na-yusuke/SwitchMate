@@ -1,0 +1,3 @@
+# Wi-Fi接続情報
+WIFI_SSID = "your_wifi_ssid_here"
+WIFI_PASSWORD = "your_wifi_password_here"
