@@ -1,7 +1,7 @@
-from .base import BaseAPI
+from .base import BaseApi
 
 
-class WebhookAPI(BaseAPI):
+class WebhookApi(BaseApi):
     """SwitchBot Webhook関連API"""
 
     def get_webhook_config(self):

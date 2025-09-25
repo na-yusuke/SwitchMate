@@ -1,7 +1,7 @@
-from .base import BaseAPI
+from .base import BaseApi
 
 
-class SceneAPI(BaseAPI):
+class SceneApi(BaseApi):
     """SwitchBot シーン関連API"""
 
     def get_scenes(self):

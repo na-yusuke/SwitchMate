@@ -9,7 +9,7 @@ from lib.hmac import hmac
 from config import SWITCHBOT_BASE_URL, SWITCHBOT_API_TOKEN, SWITCHBOT_API_CLIENT_SECRET, DEBUG
 
 
-class BaseAPI:
+class BaseApi:
     """SwitchBot API基底クラス"""
 
     def __init__(self):

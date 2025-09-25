@@ -1,7 +1,7 @@
 # SwitchBot API Package
-from .devices import DeviceAPI
-from .scenes import SceneAPI
-from .webhooks import WebhookAPI
+from .devices import DeviceApi
+from .scenes import SceneApi
+from .webhooks import WebhookApi
 
 __version__ = "1.0.0"
-__all__ = ["DeviceAPI", "SceneAPI", "WebhookAPI"]
+__all__ = ["DeviceApi", "SceneApi", "WebhookApi"]

@@ -1,7 +1,7 @@
-from .base import BaseAPI
+from .base import BaseApi
 
 
-class DeviceAPI(BaseAPI):
+class DeviceApi(BaseApi):
     """SwitchBot デバイス関連API"""
 
     def get_devices(self):
