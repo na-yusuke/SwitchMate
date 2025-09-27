@@ -24,6 +24,10 @@ Thumbs.db
 # ESP32/MicroPython
 *.mpy
 
-# Other
+# Config
 config.py
+device_config.py
+
+# Other
+samples/
 CLAUDE.md

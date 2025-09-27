@@ -1,15 +1,21 @@
 # SwitchMate Library Package
 
-# SwitchBot API
-from .switchbot import DeviceApi, SceneApi, WebhookApi
+# BLE
+from .ble import BleClient
 
 # Peripherals
 from .peripherals import MotionSensor
 
+# SwitchBot API
+from .switchbot import ColorBulb, DeviceApi, SceneApi, WebhookApi
+
 __version__ = "1.0.0"
 __all__ = [
-    # SwitchBot API
-    "DeviceApi", "SceneApi", "WebhookApi",
+    # BLE
+    "BleClient",
     # Peripherals
     "MotionSensor"
+    # SwitchBot API
+    "ColorBulb",
+    "DeviceApi", "SceneApi", "WebhookApi",
 ]
