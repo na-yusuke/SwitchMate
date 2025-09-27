@@ -3,26 +3,27 @@
 Implements the HMAC algorithm as described by RFC 2104.
 """
 
-#import warnings as _warnings
-#from _operator import _compare_digest as compare_digest
-#import hashlib as _hashlib
-#PendingDeprecationWarning = None
-#RuntimeWarning = None
+# import warnings as _warnings
+# from _operator import _compare_digest as compare_digest
+# import hashlib as _hashlib
+# PendingDeprecationWarning = None
+# RuntimeWarning = None
 import uhashlib as _hashlib
 
 trans_5C = bytes((x ^ 0x5C) for x in range(256))
 trans_36 = bytes((x ^ 0x36) for x in range(256))
 
+
 def translate(d, t):
     # Using bytes with a throw away array instead of char below
     # to avoid ending up with the wrong key when a key in the
     # form of b'\xAA' is used.
-    return b''.join([bytes([t[x]]) for x in d])
+    return b"".join([bytes([t[x]]) for x in d])
+
 
 # The size of the digests returned by HMAC depends on the underlying
 # hashing module used.  Use digest_size from the instance of HMAC instead.
 digest_size = None
-
 
 
 class HMAC:
@@ -30,6 +31,7 @@ class HMAC:
 
     This supports the API for Cryptographic Hash Functions (PEP 247).
     """
+
     blocksize = 64  # 512-bit HMAC; Both sha1 and sha256 have a 512 bits blocksize.
 
     def __init__(self, key, msg=None, digestmod=None):
@@ -50,28 +52,30 @@ class HMAC:
         self.hex_bytes = None
 
         if not isinstance(key, (bytes, bytearray)):
-            raise TypeError("key: expected bytes or bytearray, but got %r" % type(key).__name__)
+            raise TypeError(
+                "key: expected bytes or bytearray, but got %r" % type(key).__name__
+            )
 
         if digestmod is None:
-            #_warnings.warn("HMAC() without an explicit digestmod argument "
+            # _warnings.warn("HMAC() without an explicit digestmod argument "
             #               "is deprecated.", PendingDeprecationWarning, 2)
-            #digestmod = _hashlib.md5
+            # digestmod = _hashlib.md5
             digestmod = _hashlib.sha256
 
         if callable(digestmod):
             self.digest_cons = digestmod
         elif isinstance(digestmod, str):
-            self.digest_cons = lambda d=b'': getattr(_hashlib, digestmod)(d)
+            self.digest_cons = lambda d=b"": getattr(_hashlib, digestmod)(d)
         elif isinstance(digestmod, (bytes, bytearray)):
-            self.digest_cons = lambda d=b'': getattr(_hashlib, str(digestmod)[2:-1:])(d)
+            self.digest_cons = lambda d=b"": getattr(_hashlib, str(digestmod)[2:-1:])(d)
         else:
-            self.digest_cons = lambda d=b'': digestmod.new(d)
+            self.digest_cons = lambda d=b"": digestmod.new(d)
 
         self.outer = self.digest_cons()
         self.inner = self.digest_cons()
-        #self.digest_size = self.inner.digest_size
+        # self.digest_size = self.inner.digest_size
 
-        #if hasattr(self.inner, 'block_size'):
+        # if hasattr(self.inner, 'block_size'):
         #    blocksize = self.inner.block_size
         #    if blocksize < 16:
         #        _warnings.warn('block_size of %d seems too small; using our '
@@ -79,16 +83,15 @@ class HMAC:
         #                       RuntimeWarning, 2)
         #        blocksize = self.blocksize
 
-
-        if str(self.inner) == '<sha1>':
+        if str(self.inner) == "<sha1>":
             self.digest_size = 20
-        elif str(self.inner) == '<sha256>':
+        elif str(self.inner) == "<sha256>":
             self.digest_size = 32
         else:
-            #_warnings.warn('No block_size attribute on given digest object; '
+            # _warnings.warn('No block_size attribute on given digest object; '
             #               'Assuming %d.' % (self.blocksize),
             #               RuntimeWarning, 2)
-            #blocksize = self.blocksize
+            # blocksize = self.blocksize
 
             # uhashlib doesn't provide a digest_size and we only have hardcoded
             # values for the two uhashlib hash functions.
@@ -115,21 +118,23 @@ class HMAC:
         return "hmac-" + str(self.inner)[1:-1:]
 
     def update(self, msg):
-        """Update this hashing object with the string msg.
-        """
+        """Update this hashing object with the string msg."""
         if not self.finished:
             self.inner.update(msg)
         else:
             # MicroPython's uhashlib sha1 and sha256 don't support the
             # copy method (yet) so not being able to update after a
             # digest is generated is a limitation.
-            raise ValueError('Currently, a digest can only be generated once. '
-                             'This object is now "spent" and cannot be updated.')
-    #def copy(self):
+            raise ValueError(
+                "Currently, a digest can only be generated once. "
+                'This object is now "spent" and cannot be updated.'
+            )
+
+    # def copy(self):
     #    """Return a separate copy of this hashing object.
     #    An update to this copy won't affect the original object.
     #    """
-        # Call __new__ directly to avoid the expensive __init__.
+    # Call __new__ directly to avoid the expensive __init__.
     #    other = self.__class__.__new__(self.__class__)
     #    other.digest_cons = self.digest_cons
     #    other.digest_size = self.digest_size
@@ -142,9 +147,9 @@ class HMAC:
 
         To be used only internally with digest() and hexdigest().
         """
-        #h = self.outer.copy()
-        #h.update(self.inner.digest())
-        #return h
+        # h = self.outer.copy()
+        # h.update(self.inner.digest())
+        # return h
         self.outer.update(self.inner.digest())
         return self.outer
 
@@ -154,30 +159,32 @@ class HMAC:
         This returns a string containing 8-bit data. You cannot continue
         updating the object after calling this function.
         """
-        #h = self._current()
-        #return h.digest()
+        # h = self._current()
+        # return h.digest()
         if not self.finished:
             h = self._current()
             self.digest_bytes = h.digest()
             import ubinascii
+
             self.hex_bytes = ubinascii.hexlify(self.digest_bytes)
-            del(ubinascii)
+            del ubinascii
             self.finished = True
         return self.digest_bytes
 
     def hexdigest(self):
-        """Like digest(), but returns a string of hexadecimal digits instead.
-        """
-        #h = self._current()
-        #return h.hexdigest()
+        """Like digest(), but returns a string of hexadecimal digits instead."""
+        # h = self._current()
+        # return h.hexdigest()
         if not self.finished:
             h = self._current()
             self.digest_bytes = h.digest()
             import ubinascii
+
             self.hex_bytes = ubinascii.hexlify(self.digest_bytes)
-            del(ubinascii)
+            del ubinascii
             self.finished = True
         return self.hex_bytes
+
 
 def new(key, msg=None, digestmod=None):
     """Create a new hashing object and return it.
@@ -192,7 +199,8 @@ def new(key, msg=None, digestmod=None):
     """
     return HMAC(key, msg, digestmod)
 
-def compare_digest(a, b, double_hmac=True, digestmod=b'sha256'):
+
+def compare_digest(a, b, double_hmac=True, digestmod=b"sha256"):
     """Test two digests for equality in a more secure way than "==".
 
     This employs two main defenses, a double HMAC with a nonce (if available)
@@ -211,7 +219,11 @@ def compare_digest(a, b, double_hmac=True, digestmod=b'sha256'):
     precalculated digest.
     """
     if not isinstance(a, (bytes, bytearray)) or not isinstance(b, (bytes, bytearray)):
-        raise TypeError("Expected bytes or bytearray, but got {} and {}".format(type(a).__name__, type(b).__name__))
+        raise TypeError(
+            "Expected bytes or bytearray, but got {} and {}".format(
+                type(a).__name__, type(b).__name__
+            )
+        )
 
     if len(a) != len(b):
         raise ValueError("This method is only for comparing digests of equal length")
@@ -219,6 +231,7 @@ def compare_digest(a, b, double_hmac=True, digestmod=b'sha256'):
     if double_hmac:
         try:
             import uos
+
             nonce = uos.urandom(64)
         except ImportError:
             double_hmac = False
@@ -234,14 +247,16 @@ def compare_digest(a, b, double_hmac=True, digestmod=b'sha256'):
         result |= byte_value ^ b[index]
     return result == 0
 
+
 def test():
     """Test suite for the HMAC module"""
     run_tests = False
     try:
         from test_hmac import test_sha_vectors, test_sha256_rfc4231, test_compare_digest
+
         run_tests = True
     except ImportError:
-        raise AssertionError('test_hmac not found, skipping all tests.')
+        raise AssertionError("test_hmac not found, skipping all tests.")
 
     if run_tests:
         test_sha_vectors()

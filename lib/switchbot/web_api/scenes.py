@@ -2,29 +2,29 @@ from .base import BaseApi
 
 
 class SceneApi(BaseApi):
-    """SwitchBot シーン関連API"""
+    """SwitchBot Scene API"""
 
     def get_scenes(self):
-        """シーン一覧を取得"""
-        return self.__make_request('GET', '/scenes')
+        """Get scene list"""
+        return self.__make_request("GET", "/scenes")
 
     def execute_scene(self, scene_id):
-        """シーンを実行"""
-        return self.__make_request('POST', f'/scenes/{scene_id}/execute')
+        """Execute scene"""
+        return self.__make_request("POST", f"/scenes/{scene_id}/execute")
 
     def print_scenes(self):
-        """シーン一覧を見やすく表示"""
+        """Print scene list in readable format"""
         scenes_data = self.get_scenes()
 
         if not scenes_data:
             print("Failed to get scenes")
             return
 
-        if 'body' not in scenes_data:
+        if "body" not in scenes_data:
             print("No scene data found")
             return
 
-        body = scenes_data['body']
+        body = scenes_data["body"]
         print("=== SwitchBot Scenes ===")
 
         if isinstance(body, list):

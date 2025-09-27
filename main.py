@@ -5,10 +5,10 @@ import gc
 
 
 def main():
-    """メイン処理"""
+    """Main processing"""
     if DEBUG:
         print("Starting SwitchBot API demo...")
-    
+
     gc.collect()
     print("Free memory:", gc.mem_free())
 

@@ -6,11 +6,16 @@ import urequests
 import ujson
 
 from lib.hmac import hmac
-from config import SWITCHBOT_BASE_URL, SWITCHBOT_API_TOKEN, SWITCHBOT_API_CLIENT_SECRET, DEBUG
+from config import (
+    SWITCHBOT_BASE_URL,
+    SWITCHBOT_API_TOKEN,
+    SWITCHBOT_API_CLIENT_SECRET,
+    DEBUG,
+)
 
 
 class BaseApi:
-    """SwitchBot API基底クラス"""
+    """SwitchBot API base class"""
 
     def __init__(self):
         self.base_url = SWITCHBOT_BASE_URL
@@ -20,44 +25,49 @@ class BaseApi:
         self._sync_time()
 
     def _sync_time(self):
-        """NTPで時刻同期"""
+        """Synchronize time via NTP"""
         try:
             ntptime.settime()
         except:
-            pass  # NTP同期に失敗しても続行
+            pass  # Continue even if NTP sync fails
 
-        # 現在時刻をミリ秒で取得
-        # ESP32のtimestampは2000年1月1日からのミリ秒である必要があるため、946684800秒（30年）を加算
+        # Get current time in milliseconds
+        # ESP32 timestamp needs to be milliseconds since Jan 1, 2000, but Unix time has been measured since Jan 1, 1970.
+        # So add 946684800 seconds (30 years)
         self.timestamp = str(int((time.time() + 946684800) * 1000))
 
         if DEBUG:
             print(f"Timestamp: {self.timestamp}")
 
     def __generate_headers(self):
-        """SwitchBot API用のヘッダーを生成"""
+        """Generate headers for SwitchBot API"""
         nonce = ""
 
-        # 署名を生成
+        # Generate signature
         string_to_sign = self.token + self.timestamp + nonce
-        signature = ubinascii.b2a_base64(
-            hmac.new(
-                self.secret.encode('utf-8'),
-                string_to_sign.encode('utf-8'),
-                hashlib.sha256
-            ).digest()
-        ).strip().decode('utf-8')
+        signature = (
+            ubinascii.b2a_base64(
+                hmac.new(
+                    self.secret.encode("utf-8"),
+                    string_to_sign.encode("utf-8"),
+                    hashlib.sha256,
+                ).digest()
+            )
+            .strip()
+            .decode("utf-8")
+        )
 
         return {
-            'Authorization': self.token,
-            'Content-Type': 'application/json',
-            'charset': 'utf8',
-            't': self.timestamp,
-            'sign': signature,
-            'nonce': nonce
+            "Authorization": self.token,
+            "Content-Type": "application/json",
+            "charset": "utf8",
+            "t": self.timestamp,
+            "sign": signature,
+            "nonce": nonce,
         }
 
     def __make_request(self, method, endpoint, data=None):
-        """共通のHTTPリクエスト処理"""
+        """Common HTTP request processing"""
         try:
             url = f"{self.base_url}{endpoint}"
             headers = self.__generate_headers()
@@ -68,10 +78,12 @@ class BaseApi:
                 if data:
                     print(f"Data: {data}")
 
-            if method.upper() == 'GET':
+            if method.upper() == "GET":
                 response = urequests.get(url, headers=headers)
-            elif method.upper() == 'POST':
-                response = urequests.post(url, headers=headers, data=ujson.dumps(data) if data else None)
+            elif method.upper() == "POST":
+                response = urequests.post(
+                    url, headers=headers, data=ujson.dumps(data) if data else None
+                )
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
 

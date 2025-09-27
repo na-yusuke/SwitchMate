@@ -1,4 +1,4 @@
-# Wi-Fi接続情報
+# Wi-Fi connection settings
 WIFI_SSID = "your_wifi_ssid_here"
 WIFI_PASSWORD = "your_wifi_password_here"
 
@@ -11,5 +11,5 @@ SWITCHBOT_BASE_URL = "SWITCHBOT_BASE_URL"
 SWITCHBOT_API_TOKEN = "YOUR_SWITCHBOT_API_TOKEN"
 SWITCHBOT_API_CLIENT_SECRET = "YOUR_SWITCHBOT_API_CLIENT_SECRET"
 
-# デバッグモード
+# Debug mode
 DEBUG = True

@@ -17,5 +17,7 @@ __all__ = [
     "MotionSensor"
     # SwitchBot API
     "ColorBulb",
-    "DeviceApi", "SceneApi", "WebhookApi",
+    "DeviceApi",
+    "SceneApi",
+    "WebhookApi",
 ]

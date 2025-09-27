@@ -2,32 +2,26 @@ from .base import BaseApi
 
 
 class WebhookApi(BaseApi):
-    """SwitchBot Webhook関連API"""
+    """SwitchBot Webhook API"""
 
     def get_webhook_config(self):
-        """Webhook設定を取得"""
-        return self.__make_request('GET', '/webhook/queryUrl')
+        """Get webhook configuration"""
+        return self.__make_request("GET", "/webhook/queryUrl")
 
     def setup_webhook(self, url):
-        """Webhookを設定"""
-        data = {
-            'action': 'setupWebhook',
-            'url': url
-        }
-        return self.__make_request('POST', '/webhook/setupWebhook', data)
+        """Setup webhook"""
+        data = {"action": "setupWebhook", "url": url}
+        return self.__make_request("POST", "/webhook/setupWebhook", data)
 
     def delete_webhook(self, url):
-        """Webhookを削除"""
-        data = {
-            'action': 'deleteWebhook',
-            'url': url
-        }
-        return self.__make_request('POST', '/webhook/deleteWebhook', data)
+        """Delete webhook"""
+        data = {"action": "deleteWebhook", "url": url}
+        return self.__make_request("POST", "/webhook/deleteWebhook", data)
 
     def query_webhook_details(self, urls):
-        """Webhook詳細を取得"""
+        """Get webhook details"""
         data = {
-            'action': 'queryDetails',
-            'urls': urls if isinstance(urls, list) else [urls]
+            "action": "queryDetails",
+            "urls": urls if isinstance(urls, list) else [urls],
         }
-        return self.__make_request('POST', '/webhook/queryDetails', data)
+        return self.__make_request("POST", "/webhook/queryDetails", data)

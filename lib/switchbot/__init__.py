@@ -11,5 +11,7 @@ __all__ = [
     # SwitchBot BLE API
     "ColorBulb",
     # SwitchBot Web API
-    "DeviceApi", "SceneApi", "WebhookApi",
+    "DeviceApi",
+    "SceneApi",
+    "WebhookApi",
 ]
