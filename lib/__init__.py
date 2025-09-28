@@ -4,7 +4,7 @@
 from .ble import BleClient
 
 # Peripherals
-from .peripherals import MotionSensor
+from .peripherals import Button, MotionSensor
 
 # SwitchBot API
 from .switchbot import ColorBulb, DeviceApi, SceneApi, WebhookApi
@@ -14,6 +14,7 @@ __all__ = [
     # BLE
     "BleClient",
     # Peripherals
+    "Button",
     "MotionSensor",
     # SwitchBot API
     "ColorBulb",

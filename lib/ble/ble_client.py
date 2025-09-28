@@ -112,6 +112,7 @@ class BleClient:
 
         elif event == _IRQ_GATTC_NOTIFY:
             conn_handle, value_handle, notify_data = data
+            self._last_notification_data = None
             try:
                 # Create a proper copy of the data to preserve it outside IRQ context
                 data_copy = bytearray(notify_data)
@@ -233,7 +234,6 @@ class BleClient:
     def wait_for_notification(self, timeout_ms=5000):
         """Wait for notification and return the data"""
         print(f"Waiting for notification (timeout: {timeout_ms}ms)...")
-        self._last_notification_data = None
         start_time = time.ticks_ms()
 
         while self._last_notification_data is None and time.ticks_diff(time.ticks_ms(), start_time) < timeout_ms:

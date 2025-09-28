@@ -5,60 +5,63 @@ import bluetooth
 from config import SWITCHBOT_CHARACTERISTIC_UUID, SWITCHBOT_SERVICE_UUID
 from device_config import DEVICE_CONFIG
 from lib.ble import BleClient
+from lib.peripherals import Button, MotionSensor
 from lib.switchbot import ColorBulb
 
 
-def run():
-    client = BleClient(
-        bluetooth.UUID(SWITCHBOT_SERVICE_UUID),
-        bluetooth.UUID(SWITCHBOT_CHARACTERISTIC_UUID),
-    )
-    color_bulb = ColorBulb(client)
+class OriginalMotionSensor:
+    def __init__(self):
+        self._client = BleClient(
+            bluetooth.UUID(SWITCHBOT_SERVICE_UUID),
+            bluetooth.UUID(SWITCHBOT_CHARACTERISTIC_UUID),
+        )
+        self._button = Button(25)
+        # self._button.set_callback(self.setup_ble_connection())
+        self._motion_sensor = MotionSensor(27)
+        self._color_bulb = ColorBulb(self._client)
 
-    try:
-        # Set a taget device's BLE MacAddress from DEVICE_CONFIG
-        target_mac = DEVICE_CONFIG["color_bulb"]["desk_light"]["ble_mac_address"]
+        self._last_time_bulb_power_on = time.ticks_add(0, -1) / 2 - 1
 
-        # Step 1: Device scan
-        if not client.scan_for_device(target_mac, 15000):
-            print("Target device not found")
-            return
+    def setup_ble_connection(self):
+        try:
+            target_mac = DEVICE_CONFIG["color_bulb"]["corridor_light"]["ble_mac_address"]
+            print(f"\n[1/4] Scanning for device: {target_mac}")
+            if not self._client.scan_for_device(target_mac, 15000):
+                print("Device not found")
+                return
 
-        # Step 2: Connect
-        if not client.connect_to_target(10000):
-            print("Connection failed")
-            return
-        print("Connection successful")
+            print("\n[2/4] Connecting to device...")
+            if not self._client.connect_to_target(10000):
+                print("Connection failed")
+                return
+            print("Connected")
 
-        # Step 3: Discover service
-        client.discover_services()
-        time.sleep(2)
+            print("\n[3/4] Discovering services...")
+            self._client.discover_services()
 
-        # Step 4: Discover characteristic
-        client.discover_characteristics()
-        time.sleep(2)
+            print("\n[4/4] Discovering characteristics...")
+            self._client.discover_characteristics()
+            print("Setup complete\n")
+        except Exception as e:
+            print(f"An error occurred: {e}")
 
-        # Step 5: Run command
-        if client._char_handle:
-            print("SwitchBot Characteristic already discovered")
+        return self._client.is_connected()
 
-            color_bulb.power_off()
-            time.sleep(2)
-
-            color_bulb.power_on()
-            time.sleep(2)
-        else:
-            print("SwitchBot Characteristic not found")
-
-        # Step 6: After command
-        print("Maintaining connection for 5 seconds...")
-        time.sleep(5)
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
-    finally:
-        # Step 7: Disconnect
+    def disconnect_ble(self):
         print("Starting disconnect process")
-        client.disconnect()
-        print("Process completed")
+        self._client.disconnect()
+        print("Disconnect process completed")
+
+    def run(self):
+        """loop logic"""
+        self._button.monitor()
+        self.__power_off_bulb_based_elapsed_time()
+
+        if self._motion_sensor.is_motion_detected():
+            self._last_time_bulb_power_on = time.ticks_ms()
+            self._color_bulb.power_on()
+
+    def __power_off_bulb_based_elapsed_time(self):
+        if time.ticks_diff(time.ticks_ms(), self._last_time_bulb_power_on) > 5000:
+            self._color_bulb.power_off()
+            self._last_time_bulb_power_on = time.ticks_add(0, -1) / 2 - 1

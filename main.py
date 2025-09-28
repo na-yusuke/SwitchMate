@@ -1,19 +1,24 @@
-import gc
+from original_motion_sensor.main import OriginalMotionSensor
 
-from config import DEBUG
-from original_motion_sensor import main as original_motion_sensor
+original_motion_sensor = OriginalMotionSensor()
 
 
-def main():
-    """Main processing"""
-    if DEBUG:
-        print("Starting SwitchBot API demo...")
+def setup():
+    if original_motion_sensor.setup_ble_connection():
+        pass
+    else:
+        return
 
-    gc.collect()
-    print("Free memory:", gc.mem_free())
 
-    original_motion_sensor.run()
+def loop():
+    try:
+        while True:
+            original_motion_sensor.run()
+    except KeyboardInterrupt:
+        original_motion_sensor.disconnect_ble()
+        print("\nFinish process")
 
 
 if __name__ == "__main__":
-    main()
+    setup()
+    loop()
