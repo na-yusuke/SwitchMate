@@ -35,9 +35,7 @@ class DeviceApi(BaseApi):
         if "deviceList" in body and body["deviceList"]:
             print("\n[Physical Devices]")
             for device in body["deviceList"]:
-                print(
-                    f"- {device.get('deviceName', 'Unknown')} ({device.get('deviceType', 'Unknown')})"
-                )
+                print(f"- {device.get('deviceName', 'Unknown')} ({device.get('deviceType', 'Unknown')})")
                 print(f"  ID: {device.get('deviceId', 'Unknown')}")
                 if "hubDeviceId" in device:
                     print(f"  Hub: {device['hubDeviceId']}")
@@ -46,9 +44,7 @@ class DeviceApi(BaseApi):
         if "infraredRemoteList" in body and body["infraredRemoteList"]:
             print("[Virtual Infrared Devices]")
             for device in body["infraredRemoteList"]:
-                print(
-                    f"- {device.get('deviceName', 'Unknown')} ({device.get('remoteType', 'Unknown')})"
-                )
+                print(f"- {device.get('deviceName', 'Unknown')} ({device.get('remoteType', 'Unknown')})")
                 print(f"  ID: {device.get('deviceId', 'Unknown')}")
                 if "hubDeviceId" in device:
                     print(f"  Hub: {device['hubDeviceId']}")

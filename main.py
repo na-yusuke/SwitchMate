@@ -1,7 +1,7 @@
-from original_motion_sensor import main as original_motion_sensor
-from config import DEBUG
-
 import gc
+
+from config import DEBUG
+from original_motion_sensor import main as original_motion_sensor
 
 
 def main():

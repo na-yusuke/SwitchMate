@@ -60,9 +60,7 @@ class ColorBulb:
         Returns dict with parsed status or None if invalid
         """
         if not response_data or len(response_data) < 11:
-            print(
-                f"Invalid response length: {len(response_data) if response_data else 0}"
-            )
+            print(f"Invalid response length: {len(response_data) if response_data else 0}")
             return None
 
         if response_data[0] != 0x01:
@@ -78,9 +76,7 @@ class ColorBulb:
                 "blue": response_data[5],
             },
             "color_temperature": (response_data[6] << 8) | response_data[7],
-            "mode": (response_data[8] << 16)
-            | (response_data[9] << 8)
-            | response_data[10],
+            "mode": (response_data[8] << 16) | (response_data[9] << 8) | response_data[10],
             "raw_data": response_data.hex(),
         }
 
@@ -95,9 +91,7 @@ class ColorBulb:
         print("=== Color Bulb Status ===")
         print(f"Power: {'ON' if status['power_on'] else 'OFF'}")
         print(f"Brightness: {status['brightness']}%")
-        print(
-            f"RGB Color: R={status['rgb']['red']}, G={status['rgb']['green']}, B={status['rgb']['blue']}"
-        )
+        print(f"RGB Color: R={status['rgb']['red']}, G={status['rgb']['green']}, B={status['rgb']['blue']}")
         print(f"Color Temperature: {status['color_temperature']}")
         print(f"Mode: 0x{status['mode']:06X}")
         print(f"Raw Data: {status['raw_data']}")

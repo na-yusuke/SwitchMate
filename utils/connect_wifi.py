@@ -1,5 +1,6 @@
-import network
 import time
+
+import network
 
 from config import DEBUG
 
@@ -7,7 +8,7 @@ from config import DEBUG
 def init_wifi():
     """Initialize Wi-Fi connection"""
     try:
-        from config import WIFI_SSID, WIFI_PASSWORD
+        from config import WIFI_PASSWORD, WIFI_SSID
 
         if connect_wifi(WIFI_SSID, WIFI_PASSWORD):
             if DEBUG:
@@ -18,9 +19,7 @@ def init_wifi():
             return False
 
     except ImportError:
-        print(
-            "Error: config.py not found. Please create config.py with your Wi-Fi settings."
-        )
+        print("Error: config.py not found. Please create config.py with your Wi-Fi settings.")
         print("You can copy config_example.py and rename it to config.py")
         return False
     except Exception as e:

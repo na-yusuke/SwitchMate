@@ -1,6 +1,7 @@
+import time
+
 import bluetooth
 from micropython import const
-import time
 
 # BLE constants
 _IRQ_CENTRAL_CONNECT = const(1)
@@ -148,10 +149,7 @@ class BleClient:
 
         # Wait for scan completion
         start_time = time.ticks_ms()
-        while (
-            not self._is_target_found
-            and time.ticks_diff(time.ticks_ms(), start_time) < duration_ms
-        ):
+        while not self._is_target_found and time.ticks_diff(time.ticks_ms(), start_time) < duration_ms:
             time.sleep_ms(100)
 
         self._ble.gap_scan(None)
@@ -165,9 +163,7 @@ class BleClient:
             print("Target device not found")
             return False
 
-        print(
-            f"Connection attempt: {self._target_addr_bytes.hex() if self._target_addr_bytes else 'None'}"
-        )
+        print(f"Connection attempt: {self._target_addr_bytes.hex() if self._target_addr_bytes else 'None'}")
         try:
             self._ble.gap_connect(self._target_addr_type, self._target_addr_bytes)
         except Exception as e:
@@ -176,10 +172,7 @@ class BleClient:
 
         # Wait for connection completion
         start_time = time.ticks_ms()
-        while (
-            not self._is_connected
-            and time.ticks_diff(time.ticks_ms(), start_time) < timeout_ms
-        ):
+        while not self._is_connected and time.ticks_diff(time.ticks_ms(), start_time) < timeout_ms:
             time.sleep_ms(100)
 
         if self._is_connected:
@@ -195,10 +188,7 @@ class BleClient:
 
             # Wait for disconnection completion
             start_time = time.ticks_ms()
-            while (
-                self._is_connected
-                and time.ticks_diff(time.ticks_ms(), start_time) < 5000
-            ):
+            while self._is_connected and time.ticks_diff(time.ticks_ms(), start_time) < 5000:
                 time.sleep_ms(100)
 
     def discover_services(self):
@@ -212,9 +202,7 @@ class BleClient:
         if self._conn_handle is not None:
             start = start_handle or self._start_handle or 1
             end = end_handle or self._end_handle or 0xFFFF
-            self._ble.gattc_discover_characteristics(
-                self._conn_handle, start, end, uuid
-            )
+            self._ble.gattc_discover_characteristics(self._conn_handle, start, end, uuid)
             time.sleep(1)
 
     def write_characteristic(self, data, value_handle=None, response=True):
@@ -223,9 +211,7 @@ class BleClient:
             handle = value_handle or self._char_handle
             if handle is not None:
                 print(f"Data write: {data.hex()} to handle {handle}")
-                self._ble.gattc_write(
-                    self._conn_handle, handle, data, 1 if response else 0
-                )
+                self._ble.gattc_write(self._conn_handle, handle, data, 1 if response else 0)
                 time.sleep_ms(200)
                 return True
             else:
@@ -250,16 +236,11 @@ class BleClient:
         self._last_notification_data = None
         start_time = time.ticks_ms()
 
-        while (
-            self._last_notification_data is None
-            and time.ticks_diff(time.ticks_ms(), start_time) < timeout_ms
-        ):
+        while self._last_notification_data is None and time.ticks_diff(time.ticks_ms(), start_time) < timeout_ms:
             time.sleep_ms(100)
 
         if self._last_notification_data is not None:
-            print(
-                f"Notification received successfully: {len(self._last_notification_data)} bytes"
-            )
+            print(f"Notification received successfully: {len(self._last_notification_data)} bytes")
             return self._last_notification_data
         else:
             print("Timeout: No notification received")

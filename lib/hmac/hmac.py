@@ -52,9 +52,7 @@ class HMAC:
         self.hex_bytes = None
 
         if not isinstance(key, (bytes, bytearray)):
-            raise TypeError(
-                "key: expected bytes or bytearray, but got %r" % type(key).__name__
-            )
+            raise TypeError("key: expected bytes or bytearray, but got %r" % type(key).__name__)
 
         if digestmod is None:
             # _warnings.warn("HMAC() without an explicit digestmod argument "
@@ -126,8 +124,7 @@ class HMAC:
             # copy method (yet) so not being able to update after a
             # digest is generated is a limitation.
             raise ValueError(
-                "Currently, a digest can only be generated once. "
-                'This object is now "spent" and cannot be updated.'
+                "Currently, a digest can only be generated once. " 'This object is now "spent" and cannot be updated.'
             )
 
     # def copy(self):
@@ -219,11 +216,7 @@ def compare_digest(a, b, double_hmac=True, digestmod=b"sha256"):
     precalculated digest.
     """
     if not isinstance(a, (bytes, bytearray)) or not isinstance(b, (bytes, bytearray)):
-        raise TypeError(
-            "Expected bytes or bytearray, but got {} and {}".format(
-                type(a).__name__, type(b).__name__
-            )
-        )
+        raise TypeError("Expected bytes or bytearray, but got {} and {}".format(type(a).__name__, type(b).__name__))
 
     if len(a) != len(b):
         raise ValueError("This method is only for comparing digests of equal length")
@@ -252,7 +245,7 @@ def test():
     """Test suite for the HMAC module"""
     run_tests = False
     try:
-        from test_hmac import test_sha_vectors, test_sha256_rfc4231, test_compare_digest
+        from test_hmac import test_compare_digest, test_sha256_rfc4231, test_sha_vectors
 
         run_tests = True
     except ImportError:

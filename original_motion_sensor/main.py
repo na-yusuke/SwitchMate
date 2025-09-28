@@ -1,7 +1,8 @@
-import bluetooth
 import time
 
-from config import SWITCHBOT_SERVICE_UUID, SWITCHBOT_CHARACTERISTIC_UUID
+import bluetooth
+
+from config import SWITCHBOT_CHARACTERISTIC_UUID, SWITCHBOT_SERVICE_UUID
 from device_config import DEVICE_CONFIG
 from lib.ble import BleClient
 from lib.switchbot import ColorBulb

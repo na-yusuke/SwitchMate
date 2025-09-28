@@ -1,17 +1,13 @@
 import hashlib
-import ntptime
 import time
-import ubinascii
-import urequests
-import ujson
 
+import ntptime
+import ubinascii
+import ujson
+import urequests
+
+from config import DEBUG, SWITCHBOT_API_CLIENT_SECRET, SWITCHBOT_API_TOKEN, SWITCHBOT_BASE_URL
 from lib.hmac import hmac
-from config import (
-    SWITCHBOT_BASE_URL,
-    SWITCHBOT_API_TOKEN,
-    SWITCHBOT_API_CLIENT_SECRET,
-    DEBUG,
-)
 
 
 class BaseApi:
@@ -28,7 +24,7 @@ class BaseApi:
         """Synchronize time via NTP"""
         try:
             ntptime.settime()
-        except:
+        except Exception:
             pass  # Continue even if NTP sync fails
 
         # Get current time in milliseconds
@@ -81,9 +77,7 @@ class BaseApi:
             if method.upper() == "GET":
                 response = urequests.get(url, headers=headers)
             elif method.upper() == "POST":
-                response = urequests.post(
-                    url, headers=headers, data=ujson.dumps(data) if data else None
-                )
+                response = urequests.post(url, headers=headers, data=ujson.dumps(data) if data else None)
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
 

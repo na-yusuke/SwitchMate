@@ -14,7 +14,7 @@ __all__ = [
     # BLE
     "BleClient",
     # Peripherals
-    "MotionSensor"
+    "MotionSensor",
     # SwitchBot API
     "ColorBulb",
     "DeviceApi",
