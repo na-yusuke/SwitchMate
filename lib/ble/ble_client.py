@@ -45,6 +45,8 @@ class BleClient:
         self._is_target_found = False
         self._target_addr_bytes = None
         self._target_addr_type = None
+        self._notification_callback = None
+        self._last_notification_data = None
 
     def __irq(self, event, data):
         if event == _IRQ_SCAN_RESULT:
@@ -109,7 +111,16 @@ class BleClient:
 
         elif event == _IRQ_GATTC_NOTIFY:
             conn_handle, value_handle, notify_data = data
-            print(f"Notification received: {notify_data}")
+            try:
+                # Create a proper copy of the data to preserve it outside IRQ context
+                data_copy = bytearray(notify_data)
+                print(f"Notification received: {data_copy.hex()}")
+                self._last_notification_data = bytes(data_copy)
+                if self._notification_callback:
+                    self._notification_callback(bytes(data_copy))
+            except Exception as e:
+                print(f"Error processing notification: {e}")
+                self._last_notification_data = None
 
     def __addr_to_str(self, addr):
         return ":".join("%02x" % b for b in addr)
@@ -224,3 +235,32 @@ class BleClient:
     def is_connected(self):
         """Check connection status"""
         return self._is_connected
+
+    def set_notification_callback(self, callback):
+        """Set callback function for notifications"""
+        self._notification_callback = callback
+
+    def get_last_notification(self):
+        """Get last received notification data"""
+        return self._last_notification_data
+
+    def wait_for_notification(self, timeout_ms=5000):
+        """Wait for notification and return the data"""
+        print(f"Waiting for notification (timeout: {timeout_ms}ms)...")
+        self._last_notification_data = None
+        start_time = time.ticks_ms()
+
+        while (
+            self._last_notification_data is None
+            and time.ticks_diff(time.ticks_ms(), start_time) < timeout_ms
+        ):
+            time.sleep_ms(100)
+
+        if self._last_notification_data is not None:
+            print(
+                f"Notification received successfully: {len(self._last_notification_data)} bytes"
+            )
+            return self._last_notification_data
+        else:
+            print("Timeout: No notification received")
+            return None
