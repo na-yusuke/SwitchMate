@@ -1,6 +1,5 @@
-import time
-
 import network
+import time
 
 from config import DEBUG
 
@@ -8,7 +7,7 @@ from config import DEBUG
 def init_wifi():
     """Initialize Wi-Fi connection"""
     try:
-        from config import WIFI_PASSWORD, WIFI_SSID
+        from config import WIFI_SSID, WIFI_PASSWORD
 
         if connect_wifi(WIFI_SSID, WIFI_PASSWORD):
             if DEBUG:
