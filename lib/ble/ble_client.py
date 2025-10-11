@@ -164,7 +164,6 @@ class BleClient:
             time.sleep_ms(100)
 
         self._ble.gap_scan(None)
-        time.sleep_ms(500)
 
         return self._is_target_found
 
@@ -191,7 +190,7 @@ class BleClient:
         else:
             return False
 
-    def disconnect(self):
+    def disconnect(self, timeout_ms=5000):
         """Disconnect connection"""
         if self._conn_handle is not None:
             print(f"Disconnect request sent: handle={self._conn_handle}")
@@ -199,7 +198,7 @@ class BleClient:
 
             # Wait for disconnection completion
             start_time = time.ticks_ms()
-            while self._is_connected and time.ticks_diff(time.ticks_ms(), start_time) < 5000:
+            while self._is_connected and time.ticks_diff(time.ticks_ms(), start_time) < timeout_ms:
                 time.sleep_ms(100)
 
     def discover_services(self):
