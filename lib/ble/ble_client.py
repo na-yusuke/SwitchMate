@@ -78,7 +78,8 @@ class BleClient:
         elif event == _IRQ_PERIPHERAL_DISCONNECT:
             conn_handle, addr_type, addr = data
             print(f"Disconnected: {self.__addr_to_str(addr)}")
-            self.__reset()
+            self._conn_handle = None
+            self._is_connected = False
 
         elif event == _IRQ_GATTC_SERVICE_RESULT:
             conn_handle, start_handle, end_handle, uuid = data
@@ -185,10 +186,7 @@ class BleClient:
         while not self._is_connected and time.ticks_diff(time.ticks_ms(), start_time) < timeout_ms:
             time.sleep_ms(100)
 
-        if self._is_connected:
-            return True
-        else:
-            return False
+        return self._is_connected
 
     def disconnect(self, timeout_ms=5000):
         """Disconnect connection"""
@@ -200,6 +198,7 @@ class BleClient:
             start_time = time.ticks_ms()
             while self._is_connected and time.ticks_diff(time.ticks_ms(), start_time) < timeout_ms:
                 time.sleep_ms(100)
+            self._is_connected = False
 
     def discover_services(self):
         """Discover services"""
@@ -231,6 +230,12 @@ class BleClient:
     def is_connected(self):
         """Check connection status"""
         return self._is_connected
+
+    def get_addr_info(self):
+        """Get address info of the target device"""
+        if self._target_addr_bytes is not None:
+            return self.__addr_to_str(self._target_addr_bytes), self._target_addr_type
+        return None, None
 
     def get_target_data(self):
         """Get advertisement data of the target device"""

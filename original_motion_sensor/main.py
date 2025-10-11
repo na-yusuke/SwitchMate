@@ -4,21 +4,24 @@ import bluetooth
 
 from config import SWITCHBOT_CHARACTERISTIC_UUID, SWITCHBOT_SERVICE_UUID
 from device_config import DEVICE_CONFIG
-from lib.ble import BleClient
+from lib.ble import BleClient, FastReconnectClient
 from lib.peripherals import Button, MotionSensor
 from lib.switchbot import ColorBulb
 from utils import safe_reboot
 
-from .constants import COLOR_BULB_CHECK_INTERVAL, POWER_ON_DURATION
+from .constants import BLE_IDLE_TIMEOUT, COLOR_BULB_CHECK_INTERVAL, POWER_ON_DURATION
 
 
 class OriginalMotionSensor:
     def __init__(self):
         self._target_mac = DEVICE_CONFIG["color_bulb"]["corridor_light"]["ble_mac_address"]
+
         self._client = BleClient(
             bluetooth.UUID(SWITCHBOT_SERVICE_UUID),
             bluetooth.UUID(SWITCHBOT_CHARACTERISTIC_UUID),
         )
+        self._fast_client = FastReconnectClient(self._client)
+
         self._button = Button(25)
         self._button.set_callback(self.__button_pressed_callback)
         self._motion_sensor = MotionSensor(27)
@@ -26,30 +29,26 @@ class OriginalMotionSensor:
 
         self._last_time_checke_bulb_status = time.ticks_ms()
         self._last_time_bulb_power_on = time.ticks_add(0, -1) / 2 - 1
+        self._last_acitivity_time = time.ticks_add(0, -1) / 2 - 1
+
+        # Cache of GATT handles
+        self._gatt_setup_done = False
 
     def setup_ble_connection(self):
-        if self._client.is_connected():
+        if self._fast_client.is_connected():
             print("Already connected to BLE device")
             return True
 
         try:
-            print(f"\n[1/4] Scanning for device: {self._target_mac}")
-            if not self._client.scan_for_device(self._target_mac, 15000):
-                print("Device not found")
-                return False
+            print(f"[OriginalMotionSensor] Scanning for device: {self._target_mac}\n")
 
-            print("\n[2/4] Connecting to device...")
-            if not self._client.connect_to_target(5000):
+            if not self._fast_client.connect_with_cache(
+                self._target_mac,
+            ):
                 print("Connection failed")
                 return False
-            print("Connected")
 
-            print("\n[3/4] Discovering services...")
-            self._client.discover_services()
-
-            print("\n[4/4] Discovering characteristics...")
-            self._client.discover_characteristics()
-            print("Setup complete\n")
+            print("[OriginalMotionSensor] Setup complete\n")
         except Exception as e:
             print(f"An error occurred: {e}")
             return False
@@ -57,22 +56,46 @@ class OriginalMotionSensor:
         return True
 
     def disconnect_ble(self):
-        print("Starting disconnect process")
-        self._client.disconnect()
-        print("Disconnect process completed")
+        if self._fast_client.is_connected():
+            print("[Optimized] Disconnecting BLE to save power...\n")
+            self._fast_client.disconnect()
+            print("[Optimized] BLE disconnected\n")
 
     def run(self):
         """loop logic"""
+        # Monitor button
         self._button.monitor()
+
+        # Monitor motion sensor
+        if self._motion_sensor.is_motion_detected():
+            self.__handle_motion_detected()
+            self._last_acitivity_time = time.ticks_ms()
+
+        # Auto power off bulb after duration
         self.__power_off_bulb_based_elapsed_time()
-        self.__power_on_bulb()
+
+        # Auto disconnect BLE if idle
+        if self._fast_client.is_connected():
+            idle_time = time.ticks_diff(time.ticks_ms(), self._last_acitivity_time)
+            if idle_time > BLE_IDLE_TIMEOUT:
+                print("[Optimized] BLE idle timeout reached, disconnecting...\n")
+                self.disconnect_ble()
+
+        # Sync bulb status periodically
         self.__sync_bulb_status()
+
+        time.sleep_ms(100)
 
     def __button_pressed_callback(self):
         safe_reboot()
 
-    def __power_on_bulb(self):
-        if self._motion_sensor.is_motion_detected() and not self._color_bulb.is_powered_on():
+    def __handle_motion_detected(self):
+        if not self._fast_client.is_connected():
+            if not self.setup_ble_connection():
+                print("[Optimized] Cannot control bulb - connection failed")
+                return
+
+        if not self._color_bulb.is_powered_on():
             self._last_time_bulb_power_on = time.ticks_ms()
             print("---- Bulb powerd on by the motion detection ----")
             self._color_bulb.power_on()
@@ -83,23 +106,22 @@ class OriginalMotionSensor:
             self._color_bulb.is_powered_on()
             and time.ticks_diff(time.ticks_ms(), self._last_time_bulb_power_on) > POWER_ON_DURATION
         ):
+            if not self._fast_client.is_connected() and not self.setup_ble_connection():
+                return
             print("---- Bulb powered off due to elapsed time ----")
             self._color_bulb.power_off()
             print("---- Bulb powered off successfully ----\n")
             self._last_time_bulb_power_on = time.ticks_add(0, -1) / 2 - 1
 
     def __sync_bulb_status(self):
-        if time.ticks_diff(time.ticks_ms(), self._last_time_checke_bulb_status) < COLOR_BULB_CHECK_INTERVAL:
+        if (
+            time.ticks_diff(time.ticks_ms(), self._last_time_checke_bulb_status) < COLOR_BULB_CHECK_INTERVAL
+            or not self._fast_client.is_connected()
+        ):
             return
         self._last_time_checke_bulb_status = time.ticks_ms()
 
-        if not self._client.is_connected():
-            print("BLE not connected, attempting to connect...\n")
-            if not self.setup_ble_connection():
-                print("Failed to connect to BLE device")
-                return
-
-        print("---- Syncing bulb status... ----")
+        print("---- Syncing bulb status ----")
         if self._color_bulb.sync_status() is None:
             print("Failed to sync bulb status")
             return
