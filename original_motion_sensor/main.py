@@ -12,7 +12,7 @@ from utils import safe_reboot
 
 from .constants import BLE_IDLE_TIMEOUT, COLOR_BULB_CHECK_INTERVAL, POWER_ON_DURATION
 
-logger = get_logger("MotionSensor")
+logger = get_logger("OriginalMotionSensor")
 
 
 class OriginalMotionSensor:

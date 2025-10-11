@@ -101,16 +101,16 @@ class ColorBulb:
     def print_status(self):
         """Print formatted status information"""
         if not self._status:
-            print("No status data available")
+            logger.warning("No status data available")
             return
 
-        print("=== Color Bulb Status ===")
+        logger.info("=== Color Bulb Status ===")
         power_state = "ON" if self._status.get("power_on") else "OFF"
-        print(f"Power: {power_state}")
-        print(f"Brightness: {self._status.get('brightness')}%")
+        logger.info(f"Power: {power_state}")
+        logger.info(f"Brightness: {self._status.get('brightness')}%")
         rgb = self._status.get("rgb", {})
-        print(f"RGB Color: R={rgb.get('red')}, G={rgb.get('green')}, B={rgb.get('blue')}")
-        print(f"Color Temperature: {self._status.get('color_temperature')}K")
-        print(f"Mode: 0x{self._status.get('mode'):06X}")
-        print(f"Raw Data: {self._status.get('raw_data')}")
-        print("========================")
+        logger.info(f"RGB Color: R={rgb.get('red')}, G={rgb.get('green')}, B={rgb.get('blue')}")
+        logger.info(f"Color Temperature: {self._status.get('color_temperature')}K")
+        logger.info(f"Mode: 0x{self._status.get('mode'):06X}")
+        logger.info(f"Raw Data: {self._status.get('raw_data')}")
+        logger.info("========================")

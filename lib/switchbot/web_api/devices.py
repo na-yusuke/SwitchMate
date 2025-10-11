@@ -1,4 +1,8 @@
+from lib.logger import get_logger
+
 from .base import BaseApi
+
+logger = get_logger("DeviceApi")
 
 
 class DeviceApi(BaseApi):
@@ -22,35 +26,35 @@ class DeviceApi(BaseApi):
         devices_data = self.get_devices()
 
         if not devices_data:
-            print("Failed to get devices")
+            logger.warning("Failed to get devices")
             return
 
         if "body" not in devices_data:
-            print("No device data found")
+            logger.warning("No device data found")
             return
 
         body = devices_data["body"]
-        print("=== SwitchBot Devices ===")
+        logger.info("=== SwitchBot Devices ===")
 
         if "deviceList" in body and body["deviceList"]:
-            print("\n[Physical Devices]")
+            logger.info("\n[Physical Devices]")
             for device in body["deviceList"]:
-                print(f"- {device.get('deviceName', 'Unknown')} ({device.get('deviceType', 'Unknown')})")
-                print(f"  ID: {device.get('deviceId', 'Unknown')}")
+                logger.info(f"- {device.get('deviceName', 'Unknown')} ({device.get('deviceType', 'Unknown')})")
+                logger.info(f"  ID: {device.get('deviceId', 'Unknown')}")
                 if "hubDeviceId" in device:
-                    print(f"  Hub: {device['hubDeviceId']}")
-                print()
+                    logger.info(f"  Hub: {device['hubDeviceId']}")
+                logger.info()
 
         if "infraredRemoteList" in body and body["infraredRemoteList"]:
-            print("[Virtual Infrared Devices]")
+            logger.info("[Virtual Infrared Devices]")
             for device in body["infraredRemoteList"]:
-                print(f"- {device.get('deviceName', 'Unknown')} ({device.get('remoteType', 'Unknown')})")
-                print(f"  ID: {device.get('deviceId', 'Unknown')}")
+                logger.info(f"- {device.get('deviceName', 'Unknown')} ({device.get('remoteType', 'Unknown')})")
+                logger.info(f"  ID: {device.get('deviceId', 'Unknown')}")
                 if "hubDeviceId" in device:
-                    print(f"  Hub: {device['hubDeviceId']}")
-                print()
+                    logger.info(f"  Hub: {device['hubDeviceId']}")
+                logger.info()
 
-        print("========================")
+        logger.info("========================")
 
     def turn_on_device(self, device_id):
         """Turn on SwitchBot device"""

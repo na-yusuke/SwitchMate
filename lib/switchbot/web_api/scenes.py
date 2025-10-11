@@ -1,4 +1,8 @@
+from lib.logger import get_logger
+
 from .base import BaseApi
+
+logger = get_logger("SceneApi")
 
 
 class SceneApi(BaseApi):
@@ -17,22 +21,22 @@ class SceneApi(BaseApi):
         scenes_data = self.get_scenes()
 
         if not scenes_data:
-            print("Failed to get scenes")
+            logger.warning("Failed to get scenes")
             return
 
         if "body" not in scenes_data:
-            print("No scene data found")
+            logger.warning("No scene data found")
             return
 
         body = scenes_data["body"]
-        print("=== SwitchBot Scenes ===")
+        logger.info("=== SwitchBot Scenes ===")
 
         if isinstance(body, list):
             for scene in body:
-                print(f"- {scene.get('sceneName', 'Unknown')}")
-                print(f"  ID: {scene.get('sceneId', 'Unknown')}")
-                print()
+                logger.info(f"- {scene.get('sceneName', 'Unknown')}")
+                logger.info(f"  ID: {scene.get('sceneId', 'Unknown')}")
+                logger.info()
         else:
-            print("No scenes found")
+            logger.warning("No scenes found")
 
-        print("========================")
+        logger.info("========================")

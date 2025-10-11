@@ -1,11 +1,4 @@
-from lib.logger import LogLevel, configure
 from original_motion_sensor.main import OriginalMotionSensor
-
-# Configure logging - adjust level as needed
-# LogLevel.DEBUG: Show all logs (development)
-# LogLevel.INFO: Show info and above (default)
-# LogLevel.WARNING: Show warnings and above (production)
-configure(level=LogLevel.INFO)
 
 original_motion_sensor = OriginalMotionSensor()
 

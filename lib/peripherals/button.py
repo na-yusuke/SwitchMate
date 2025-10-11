@@ -28,7 +28,7 @@ class Button:
         # Detect the moment the button is pressed (change from 1 to 0)
         if self._last_button_state == 1 and current_button_state == 0:
             if not self._is_pressed:
-                logger.info("Button pressed")
+                logger.debug("Button pressed")
                 self._is_pressed = True
                 if self._pressed_callback:
                     self._pressed_callback()

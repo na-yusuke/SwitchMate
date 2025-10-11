@@ -6,8 +6,11 @@ import ubinascii
 import ujson
 import urequests
 
-from config import DEBUG, SWITCHBOT_API_CLIENT_SECRET, SWITCHBOT_API_TOKEN, SWITCHBOT_BASE_URL
+from config import SWITCHBOT_API_CLIENT_SECRET, SWITCHBOT_API_TOKEN, SWITCHBOT_BASE_URL
 from lib.hmac import hmac
+from lib.logger import get_logger
+
+logger = get_logger("BaseApi")
 
 
 class BaseApi:
@@ -32,8 +35,7 @@ class BaseApi:
         # So add 946684800 seconds (30 years)
         self.timestamp = str(int((time.time() + 946684800) * 1000))
 
-        if DEBUG:
-            print(f"Timestamp: {self.timestamp}")
+        logger.debug(f"Timestamp: {self.timestamp}")
 
     def __generate_headers(self):
         """Generate headers for SwitchBot API"""
@@ -68,11 +70,10 @@ class BaseApi:
             url = f"{self.base_url}{endpoint}"
             headers = self.__generate_headers()
 
-            if DEBUG:
-                print(f"Request: {method} {url}")
-                print(f"Headers: {headers}")
-                if data:
-                    print(f"Data: {data}")
+            logger.debug(f"Request: {method} {url}")
+            logger.debug(f"Headers: {headers}")
+            if data:
+                logger.debug(f"Data: {data}")
 
             if method.upper() == "GET":
                 response = urequests.get(url, headers=headers)
@@ -81,21 +82,18 @@ class BaseApi:
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
 
-            if DEBUG:
-                print(f"Response status: {response.status_code}")
-                print(f"Response text: {response.text}")
+            logger.debug(f"Response status: {response.status_code}")
+            logger.debug(f"Response text: {response.text}")
 
             if response.status_code == 200:
                 result = ujson.loads(response.text)
                 response.close()
                 return result
             else:
-                if DEBUG:
-                    print(f"API Error: {response.status_code}")
+                logger.debug(f"API Error: {response.status_code}")
                 response.close()
                 return None
 
         except Exception as e:
-            if DEBUG:
-                print(f"Exception in __make_request: {e}")
+            logger.debug(f"Exception in __make_request: {e}")
             return None

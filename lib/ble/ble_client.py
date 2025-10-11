@@ -5,7 +5,6 @@ from micropython import const
 
 from lib.logger import get_logger
 
-# Initialize logger
 logger = get_logger("BleClient")
 
 # BLE constants

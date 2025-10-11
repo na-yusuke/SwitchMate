@@ -2,7 +2,9 @@ import time
 
 import network
 
-from config import DEBUG
+from lib.logger import get_logger
+
+logger = get_logger("connect_wifi")
 
 
 def init_wifi():
@@ -11,19 +13,18 @@ def init_wifi():
         from config import WIFI_PASSWORD, WIFI_SSID
 
         if connect_wifi(WIFI_SSID, WIFI_PASSWORD):
-            if DEBUG:
-                print("Boot sequence completed successfully")
+            logger.info("Boot sequence completed successfully")
             return True
         else:
-            print("Boot sequence failed - Wi-Fi connection error")
+            logger.error("Boot sequence failed - Wi-Fi connection error")
             return False
 
     except ImportError:
-        print("Error: config.py not found. Please create config.py with your Wi-Fi settings.")
-        print("You can copy config_example.py and rename it to config.py")
+        logger.error("Error: config.py not found. Please create config.py with your Wi-Fi settings.")
+        logger.error("You can copy config_example.py and rename it to config.py")
         return False
     except Exception as e:
-        print(f"Unexpected error during Wi-Fi initialization: {e}")
+        logger.error(f"Unexpected error during Wi-Fi initialization: {e}")
         return False
 
 
@@ -32,21 +33,21 @@ def connect_wifi(ssid, password, timeout_ms=10000):
     wlan.active(True)
 
     if wlan.isconnected():
-        print("Already connected to Wi-Fi")
-        print("Network config:", wlan.ifconfig())
+        logger.info("Already connected to Wi-Fi")
+        logger.info("Network config:", wlan.ifconfig())
         return True
 
-    print("Connecting to Wi-Fi...")
+    logger.info("Connecting to Wi-Fi...")
     wlan.connect(ssid, password)
 
     start = time.ticks_ms()
     while not wlan.isconnected():
         if time.ticks_diff(time.ticks_ms(), start) > timeout_ms:
-            print("Wi-Fi connection timeout")
+            logger.error("Wi-Fi connection timeout")
             return False
         time.sleep(0.5)
-        print(".", end="")
+        logger.info(".", end="")
 
-    print("\nWi-Fi connected successfully!")
-    print("Network config:", wlan.ifconfig())
+    logger.info("\nWi-Fi connected successfully!")
+    logger.info("Network config:", wlan.ifconfig())
     return True
