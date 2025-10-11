@@ -3,6 +3,11 @@ import time
 import bluetooth
 from micropython import const
 
+from lib.logger import get_logger
+
+# Initialize logger
+logger = get_logger("BleClient")
+
 # BLE constants
 _IRQ_CENTRAL_CONNECT = const(1)
 _IRQ_CENTRAL_DISCONNECT = const(2)
@@ -61,63 +66,63 @@ class BleClient:
         if event == _IRQ_SCAN_RESULT:
             addr_type, addr, adv_type, rssi, adv_data = data
             addr_str = self.__addr_to_str(addr)
-            print(f"Device discovered: {addr_str}, RSSI: {rssi}")
+            logger.debug(f"Device discovered: {addr_str}, RSSI: {rssi}")
 
             if self._scan_callback:
                 self._scan_callback(addr_type, addr, adv_type, rssi, adv_data)
 
         elif event == _IRQ_SCAN_DONE:
-            print("Scan completed")
+            logger.debug("Scan completed")
 
         elif event == _IRQ_PERIPHERAL_CONNECT:
             conn_handle, addr_type, addr = data
-            print(f"Connection successful: {self.__addr_to_str(addr)}")
+            logger.info(f"Connected: {self.__addr_to_str(addr)}")
             self._conn_handle = conn_handle
             self._is_connected = True
 
         elif event == _IRQ_PERIPHERAL_DISCONNECT:
             conn_handle, addr_type, addr = data
-            print(f"Disconnected: {self.__addr_to_str(addr)}")
+            logger.info(f"Disconnected: {self.__addr_to_str(addr)}")
             self._conn_handle = None
             self._is_connected = False
 
         elif event == _IRQ_GATTC_SERVICE_RESULT:
             conn_handle, start_handle, end_handle, uuid = data
-            print(f"Service discovered: {uuid}")
+            logger.debug(f"Service discovered: {uuid}")
             if uuid == self._service_uuid:
                 self._start_handle = start_handle
                 self._end_handle = end_handle
-                print(f"SwitchBot service discovered: {start_handle}-{end_handle}")
+                logger.info(f"Target service found: {start_handle}-{end_handle}")
 
         elif event == _IRQ_GATTC_SERVICE_DONE:
             conn_handle, status = data
-            print(f"Service discovery completed: status={status}")
+            logger.debug(f"Service discovery done: status={status}")
 
         elif event == _IRQ_GATTC_CHARACTERISTIC_RESULT:
             conn_handle, def_handle, value_handle, properties, uuid = data
-            print(f"Characteristic discovered: {uuid}, handle={value_handle}")
+            logger.debug(f"Characteristic: {uuid}, handle={value_handle}")
             if uuid == self._characteristic_uuid:
                 self._char_handle = value_handle
-                print(f"SwitchBot Characteristic discovered: handle={value_handle}")
+                logger.info(f"Target characteristic found: handle={value_handle}")
 
         elif event == _IRQ_GATTC_CHARACTERISTIC_DONE:
             conn_handle, status = data
-            print(f"Characteristic discovery completed: status={status}")
+            logger.debug(f"Characteristic discovery done: status={status}")
 
         elif event == _IRQ_GATTC_READ_RESULT:
             conn_handle, value_handle, char_data = data
-            print(f"Read result: {char_data}")
+            logger.debug(f"Read result: {char_data}")
 
         elif event == _IRQ_GATTC_READ_DONE:
             conn_handle, value_handle, status = data
-            print(f"Read completed: status={status}")
+            logger.debug(f"Read done: status={status}")
 
         elif event == _IRQ_GATTC_WRITE_DONE:
             conn_handle, value_handle, status = data
             if status == 0:
-                print(f"Write successful: handle={value_handle}")
+                logger.debug(f"Write OK: handle={value_handle}")
             else:
-                print(f"Write failed: handle={value_handle}, status={status}")
+                logger.error(f"Write failed: handle={value_handle}, status={status}")
 
         elif event == _IRQ_GATTC_NOTIFY:
             conn_handle, value_handle, notify_data = data
@@ -125,12 +130,12 @@ class BleClient:
             try:
                 # Create a proper copy of the data to preserve it outside IRQ context
                 data_copy = bytearray(notify_data)
-                print(f"[GATT] Notification received: {data_copy.hex()}")
+                logger.debug(f"Notification: {data_copy.hex()}")
                 self._last_notification_data = bytes(data_copy)
                 if self._notification_callback:
                     self._notification_callback(bytes(data_copy))
             except Exception as e:
-                print(f"Error processing notification: {e}")
+                logger.error(f"Notification error: {e}")
                 self._last_notification_data = None
 
     def __addr_to_str(self, addr):
@@ -147,7 +152,7 @@ class BleClient:
         def scan_callback(addr_type, addr, adv_type, rssi, adv_data):
             addr_str = self.__addr_to_str(addr)
             if addr_str == target_mac_lower:
-                print(f"Target device found: {addr_str}")
+                logger.info(f"Target device found: {addr_str}")
                 self._is_target_found = True
                 self._target_addr_type = addr_type
                 self._target_addr_bytes = bytes(addr)
@@ -155,7 +160,7 @@ class BleClient:
                 # Stop scanning when target is found
                 self._ble.gap_scan(None)
 
-        print(f"Device scan started: {target_mac}")
+        logger.info(f"Scanning for: {target_mac}")
         self._scan_callback = scan_callback
         self._ble.gap_scan(duration_ms, 30000, 30000)
 
@@ -171,14 +176,14 @@ class BleClient:
     def connect_to_target(self, timeout_ms=10000):
         """Connect to target device found in scan"""
         if not self._is_target_found:
-            print("Target device not found")
+            logger.warning("Target device not found")
             return False
 
-        print(f"Connection attempt: {self._target_addr_bytes.hex() if self._target_addr_bytes else 'None'}")
+        logger.info(f"Connecting to: {self._target_addr_bytes.hex() if self._target_addr_bytes else 'None'}")
         try:
             self._ble.gap_connect(self._target_addr_type, self._target_addr_bytes)
         except Exception as e:
-            print(f"Connection error: {e}")
+            logger.error(f"Connection error: {e}")
             return False
 
         # Wait for connection completion
@@ -191,7 +196,7 @@ class BleClient:
     def disconnect(self, timeout_ms=5000):
         """Disconnect connection"""
         if self._conn_handle is not None:
-            print(f"Disconnect request sent: handle={self._conn_handle}")
+            logger.info(f"Disconnecting: handle={self._conn_handle}")
             self._ble.gap_disconnect(self._conn_handle)
 
             # Wait for disconnection completion
@@ -219,12 +224,12 @@ class BleClient:
         if self._conn_handle is not None:
             handle = value_handle or self._char_handle
             if handle is not None:
-                print(f"[GATT] Data write: {data.hex()} to handle {handle}")
+                logger.debug(f"Writing: {data.hex()} to handle {handle}")
                 self._ble.gattc_write(self._conn_handle, handle, data, 1 if response else 0)
                 time.sleep_ms(200)
                 return True
             else:
-                print("Characteristic handle not found")
+                logger.error("Characteristic handle not found")
         return False
 
     def is_connected(self):
@@ -251,15 +256,15 @@ class BleClient:
 
     def wait_for_notification(self, timeout_ms=5000):
         """Wait for notification and return the data"""
-        print(f"Waiting for notification (timeout: {timeout_ms}ms)...")
+        logger.debug(f"Waiting for notification (timeout: {timeout_ms}ms)")
         start_time = time.ticks_ms()
 
         while self._last_notification_data is None and time.ticks_diff(time.ticks_ms(), start_time) < timeout_ms:
             time.sleep_ms(100)
 
         if self._last_notification_data is not None:
-            print(f"Notification received successfully: {len(self._last_notification_data)} bytes")
+            logger.info(f"Notification received: {len(self._last_notification_data)} bytes")
             return self._last_notification_data
         else:
-            print("Timeout: No notification received")
+            logger.warning("Notification timeout")
             return None

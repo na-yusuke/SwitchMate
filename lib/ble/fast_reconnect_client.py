@@ -5,6 +5,9 @@ Fast BLE reconnection wrapper for BleClient
 import time
 
 from lib.ble import BleClient
+from lib.logger import get_logger
+
+logger = get_logger("FastReconnect")
 
 
 class FastReconnectClient:
@@ -26,36 +29,36 @@ class FastReconnectClient:
             bool: True if connected, False otherwise
         """
         if self._client.is_connected():
-            print("[FastReconnect] Already connected")
+            logger.info("Already connected")
             return True
 
         if self._client.get_addr_info() != (None, None):
-            print("[FastReconnect] Trying cached address...")
+            logger.debug("Trying cached address...")
             if self.__try_direct_connect(connect_timeout_ms):
-                print("[FastReconnect] Connected using cache")
+                logger.info("Connected using cache")
                 return True
             else:
-                print("[FastReconnect] Cache failed, falling back to scan")
+                logger.warning("Cache failed, falling back to scan")
 
-        print(f"[FastReconnect] Scanning for {target_mac}...")
+        logger.info(f"Scanning for {target_mac}...")
         start_time = time.ticks_ms()
 
         if not self._client.scan_for_device(target_mac, scan_timeout_ms):
-            print("[FastReconnect] Device not found")
+            logger.error("Device not found")
             return False
 
         if not self._client.connect_to_target(connect_timeout_ms):
-            print("[FastReconnect] Connection failed")
+            logger.error("Connection failed")
             return False
 
-        print("[FastReconnect] Discovering services...\n")
+        logger.debug("Discovering services...")
         self._client.discover_services()
 
-        print("[FastReconnect] Discovering characteristics...\n")
+        logger.debug("Discovering characteristics...")
         self._client.discover_characteristics()
 
         connect_duration = time.ticks_diff(time.ticks_ms(), start_time)
-        print(f"[FastReconnect] Connected in {connect_duration}ms")
+        logger.info(f"Connected in {connect_duration}ms")
 
         return True
 
@@ -64,7 +67,7 @@ class FastReconnectClient:
         try:
             return self._client.connect_to_target(timeout_ms)
         except Exception as e:
-            print(f"[FastReconnect] Direct connect error: {e}")
+            logger.error(f"Direct connect error: {e}")
             return False
 
     def is_connected(self):

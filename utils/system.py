@@ -2,6 +2,10 @@ import time
 
 import machine
 
+from lib.logger import get_logger
+
+logger = get_logger("System")
+
 
 def reboot(delay_sec=0):
     """
@@ -11,10 +15,10 @@ def reboot(delay_sec=0):
         delay_sec: Delay in seconds before rebooting. Default is 0 (immediate reboot).
     """
     if delay_sec > 0:
-        print(f"Rebooting in {delay_sec} seconds...")
+        logger.warning(f"Rebooting in {delay_sec} seconds...")
         time.sleep(delay_sec)
 
-    print("Rebooting now...")
+    logger.warning("Rebooting now...")
     machine.reset()
 
 
@@ -25,8 +29,8 @@ def safe_reboot():
 
         ble = bluetooth.BLE()
         ble.active(False)
-        print("BLE deactivated")
+        logger.info("BLE deactivated")
     except Exception as e:
-        print(f"Error deactivating BLE: {e}")
+        logger.error(f"Error deactivating BLE: {e}")
 
     reboot(delay_sec=1)

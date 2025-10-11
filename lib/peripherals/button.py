@@ -2,6 +2,10 @@ import time
 
 from machine import Pin
 
+from lib.logger import get_logger
+
+logger = get_logger("Button")
+
 
 class Button:
     def __init__(self, pin):
@@ -11,7 +15,7 @@ class Button:
         self._last_button_state = 1
 
     def set_callback(self, pressed_callback):
-        print("Setting button callback")
+        logger.debug("Setting button callback")
         self._pressed_callback = pressed_callback
 
     def is_pressed(self):
@@ -24,14 +28,14 @@ class Button:
         # Detect the moment the button is pressed (change from 1 to 0)
         if self._last_button_state == 1 and current_button_state == 0:
             if not self._is_pressed:
-                print("Button pressed")
+                logger.info("Button pressed")
                 self._is_pressed = True
                 if self._pressed_callback:
                     self._pressed_callback()
         # Detect the moment the button is released (change from 0 to 1)
         elif self._last_button_state == 0 and current_button_state == 1:
             if self._is_pressed:
-                print("Button released")
+                logger.debug("Button released")
                 self._is_pressed = False
 
         # Update the last state

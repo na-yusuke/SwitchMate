@@ -5,11 +5,14 @@ import bluetooth
 from config import SWITCHBOT_CHARACTERISTIC_UUID, SWITCHBOT_SERVICE_UUID
 from device_config import DEVICE_CONFIG
 from lib.ble import BleClient, FastReconnectClient
+from lib.logger import get_logger
 from lib.peripherals import Button, MotionSensor
 from lib.switchbot import ColorBulb
 from utils import safe_reboot
 
 from .constants import BLE_IDLE_TIMEOUT, COLOR_BULB_CHECK_INTERVAL, POWER_ON_DURATION
+
+logger = get_logger("MotionSensor")
 
 
 class OriginalMotionSensor:
@@ -33,30 +36,30 @@ class OriginalMotionSensor:
 
     def setup_ble_connection(self):
         if self._fast_client.is_connected():
-            print("Already connected to BLE device")
+            logger.info("Already connected to BLE device")
             return True
 
         try:
-            print(f"[OriginalMotionSensor] Scanning for device: {self._target_mac}\n")
+            logger.info(f"Scanning for device: {self._target_mac}")
 
             if not self._fast_client.connect_with_cache(
                 self._target_mac,
             ):
-                print("Connection failed")
+                logger.error("Connection failed")
                 return False
 
-            print("[OriginalMotionSensor] Setup complete\n")
+            logger.info("Setup complete")
         except Exception as e:
-            print(f"An error occurred: {e}")
+            logger.error(f"An error occurred: {e}")
             return False
 
         return True
 
     def disconnect_ble(self):
         if self._fast_client.is_connected():
-            print("[Optimized] Disconnecting BLE to save power\n")
+            logger.info("Disconnecting BLE to save power")
             self._fast_client.disconnect()
-            print("[Optimized] BLE disconnected\n")
+            logger.info("BLE disconnected")
 
     def run(self):
         """loop logic"""
@@ -74,7 +77,7 @@ class OriginalMotionSensor:
         # Auto disconnect BLE if idle
         if self._fast_client.is_connected():
             if time.ticks_diff(time.ticks_ms(), self._last_activity_time) > BLE_IDLE_TIMEOUT:
-                print("[Optimized] BLE idle timeout reached, disconnecting")
+                logger.info("BLE idle timeout reached, disconnecting")
                 self.disconnect_ble()
 
         # Sync bulb status periodically
@@ -88,14 +91,14 @@ class OriginalMotionSensor:
     def __handle_motion_detected(self):
         if not self._fast_client.is_connected():
             if not self.setup_ble_connection():
-                print("[Optimized] Cannot control bulb - connection failed")
+                logger.error("Cannot control bulb - connection failed")
                 return
 
         if not self._color_bulb.is_powered_on():
             self._last_time_bulb_power_on = time.ticks_ms()
-            print("---- Bulb powered on by the motion detection ----")
+            logger.info("Bulb powered on by motion detection")
             self._color_bulb.power_on()
-            print("---- Bulb powered on successfully ----\n")
+            logger.info("Bulb powered on successfully")
 
     def __power_off_bulb_based_elapsed_time(self):
         if (
@@ -104,9 +107,9 @@ class OriginalMotionSensor:
         ):
             if not self._fast_client.is_connected() and not self.setup_ble_connection():
                 return
-            print("---- Bulb powered off due to elapsed time ----")
+            logger.info("Bulb powered off due to elapsed time")
             self._color_bulb.power_off()
-            print("---- Bulb powered off successfully ----\n")
+            logger.info("Bulb powered off successfully")
             self._last_time_bulb_power_on = time.ticks_add(0, -1) / 2 - 1
 
     def __sync_bulb_status(self):
@@ -117,8 +120,8 @@ class OriginalMotionSensor:
             return
         self._last_time_check_bulb_status = time.ticks_ms()
 
-        print("---- Syncing bulb status ----")
+        logger.debug("Syncing bulb status")
         if self._color_bulb.sync_status() is None:
-            print("Failed to sync bulb status")
+            logger.warning("Failed to sync bulb status")
             return
-        print("---- Bulb status synced successfully ----\n")
+        logger.debug("Bulb status synced successfully")

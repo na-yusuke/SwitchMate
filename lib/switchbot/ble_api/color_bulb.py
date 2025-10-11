@@ -3,6 +3,10 @@
 https://github.com/OpenWonderLabs/SwitchBotAPI-BLE/blob/latest/devicetypes/colorbulb.md
 """
 
+from lib.logger import get_logger
+
+logger = get_logger("ColorBulb")
+
 
 class ColorBulb:
     def __init__(self, ble_client):
@@ -42,20 +46,21 @@ class ColorBulb:
         """Read bulb status and return parsed result"""
         # Correct command format: 0x570F4801 (4 bytes)
         command = bytes([0x57, 0x0F, 0x48, 0x01])
-        print(f"Sending status request: {command.hex()}")
+        logger.debug(f"Requesting status: {command.hex()}")
 
         # Send status request command
         if not self._ble_client.write_characteristic(command):
-            print("Failed to send status request")
+            logger.error("Failed to send status request")
             return None
 
         # Wait for notification response
         response_data = self._ble_client.wait_for_notification(timeout_ms)
         if response_data is None:
-            print("No response received within timeout")
+            logger.warning("Status sync timeout")
             return None
 
         self._status = self.__parse_status_response(response_data)
+        logger.info("Status synced successfully")
         return self._status
 
     def __parse_status_response(self, response_data):
@@ -73,11 +78,11 @@ class ColorBulb:
         Returns dict with parsed status or None if invalid
         """
         if not response_data or len(response_data) < 11:
-            print(f"Invalid response length: {len(response_data) if response_data else 0}")
+            logger.error(f"Invalid response length: {len(response_data) if response_data else 0}")
             return None
 
         if response_data[0] != 0x01:
-            print(f"Invalid response header: 0x{response_data[0]:02X}")
+            logger.error(f"Invalid response header: 0x{response_data[0]:02X}")
             return None
 
         return {
