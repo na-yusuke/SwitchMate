@@ -46,6 +46,7 @@ class BleClient:
         self._is_target_found = False
         self._target_addr_bytes = None
         self._target_addr_type = None
+        self._target_data = None
         self._notification_callback = None
         self._last_notification_data = None
 
@@ -116,7 +117,7 @@ class BleClient:
             try:
                 # Create a proper copy of the data to preserve it outside IRQ context
                 data_copy = bytearray(notify_data)
-                print(f"Notification received: {data_copy.hex()}")
+                print(f"[GATT] Notification received: {data_copy.hex()}\n")
                 self._last_notification_data = bytes(data_copy)
                 if self._notification_callback:
                     self._notification_callback(bytes(data_copy))
@@ -132,6 +133,7 @@ class BleClient:
         self._is_target_found = False
         self._target_addr_bytes = None
         self._target_addr_type = None
+        self._target_data = None
         target_mac_lower = target_mac.lower()
 
         def scan_callback(addr_type, addr, adv_type, rssi, adv_data):
@@ -141,6 +143,7 @@ class BleClient:
                 self._is_target_found = True
                 self._target_addr_type = addr_type
                 self._target_addr_bytes = bytes(addr)
+                self._target_data = adv_data
                 # Stop scanning when target is found
                 self._ble.gap_scan(None)
 
@@ -211,7 +214,7 @@ class BleClient:
         if self._conn_handle is not None:
             handle = value_handle or self._char_handle
             if handle is not None:
-                print(f"Data write: {data.hex()} to handle {handle}")
+                print(f"[GATT] Data write: {data.hex()} to handle {handle}")
                 self._ble.gattc_write(self._conn_handle, handle, data, 1 if response else 0)
                 time.sleep_ms(200)
                 return True
@@ -222,6 +225,10 @@ class BleClient:
     def is_connected(self):
         """Check connection status"""
         return self._is_connected
+
+    def get_target_data(self):
+        """Get advertisement data of the target device"""
+        return self._target_data
 
     def set_notification_callback(self, callback):
         """Set callback function for notifications"""

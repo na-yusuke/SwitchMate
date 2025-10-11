@@ -6,44 +6,57 @@ https://github.com/OpenWonderLabs/SwitchBotAPI-BLE/blob/latest/devicetypes/color
 
 class ColorBulb:
     def __init__(self, ble_client):
-        self.ble_client = ble_client
-        self._last_status_response = None
+        self._ble_client = ble_client
+        self._status = {
+            "power_on": False,
+            "brightness": 0,
+            "rgb": {"red": 0, "green": 0, "blue": 0},
+            "color_temperature": 0,
+            "mode": 0,
+            "raw_data": "",
+        }
 
     def power_on(self):
         """Turn on the bulb"""
         command = bytes([0x57, 0x0F, 0x47, 0x01, 0x01])
-        return self.ble_client.write_characteristic(command)
+        self._status.update(power_on=True)
+        return self._ble_client.write_characteristic(command)
 
     def power_off(self):
         """Turn off the bulb"""
         command = bytes([0x57, 0x0F, 0x47, 0x01, 0x02])
-        return self.ble_client.write_characteristic(command)
+        self._status.update(power_on=False)
+        return self._ble_client.write_characteristic(command)
+
+    def is_powered_on(self):
+        """Return current power state"""
+        return self._status.get("power_on", False)
 
     def set_brightness(self, brightness):
         """Brightness (1-100)"""
         brightness = max(1, min(100, brightness))
         command = bytes([0x57, 0x0F, 0x47, 0x01, 0x14, brightness])
-        return self.ble_client.write_characteristic(command)
+        return self._ble_client.write_characteristic(command)
 
-    def get_status(self, timeout_ms=5000):
+    def sync_status(self, timeout_ms=5000):
         """Read bulb status and return parsed result"""
         # Correct command format: 0x570F4801 (4 bytes)
         command = bytes([0x57, 0x0F, 0x48, 0x01])
         print(f"Sending status request: {command.hex()}")
 
         # Send status request command
-        if not self.ble_client.write_characteristic(command):
+        if not self._ble_client.write_characteristic(command):
             print("Failed to send status request")
             return None
 
         # Wait for notification response
-        response_data = self.ble_client.wait_for_notification(timeout_ms)
+        response_data = self._ble_client.wait_for_notification(timeout_ms)
         if response_data is None:
             print("No response received within timeout")
             return None
 
-        # Parse and return status
-        return self.__parse_status_response(response_data)
+        self._status = self.__parse_status_response(response_data)
+        return self._status
 
     def __parse_status_response(self, response_data):
         """Parse bulb status response
@@ -67,7 +80,7 @@ class ColorBulb:
             print(f"Invalid response header: 0x{response_data[0]:02X}")
             return None
 
-        status = {
+        return {
             "power_on": bool(response_data[1] & 0x80),  # Bit 7
             "brightness": response_data[2],
             "rgb": {
@@ -80,19 +93,19 @@ class ColorBulb:
             "raw_data": response_data.hex(),
         }
 
-        return status
-
-    def print_status(self, status):
+    def print_status(self):
         """Print formatted status information"""
-        if not status:
+        if not self._status:
             print("No status data available")
             return
 
         print("=== Color Bulb Status ===")
-        print(f"Power: {'ON' if status['power_on'] else 'OFF'}")
-        print(f"Brightness: {status['brightness']}%")
-        print(f"RGB Color: R={status['rgb']['red']}, G={status['rgb']['green']}, B={status['rgb']['blue']}")
-        print(f"Color Temperature: {status['color_temperature']}")
-        print(f"Mode: 0x{status['mode']:06X}")
-        print(f"Raw Data: {status['raw_data']}")
+        power_state = "ON" if self._status.get("power_on") else "OFF"
+        print(f"Power: {power_state}")
+        print(f"Brightness: {self._status.get('brightness')}%")
+        rgb = self._status.get("rgb", {})
+        print(f"RGB Color: R={rgb.get('red')}, G={rgb.get('green')}, B={rgb.get('blue')}")
+        print(f"Color Temperature: {self._status.get('color_temperature')}K")
+        print(f"Mode: 0x{self._status.get('mode'):06X}")
+        print(f"Raw Data: {self._status.get('raw_data')}")
         print("========================")
