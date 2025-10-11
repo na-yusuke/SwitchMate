@@ -4,10 +4,9 @@ original_motion_sensor = OriginalMotionSensor()
 
 
 def setup():
-    if original_motion_sensor.setup_ble_connection():
-        pass
-    else:
-        return
+    is_connected = False
+    while not is_connected:
+        is_connected = original_motion_sensor.setup_ble_connection()
 
 
 def loop():

@@ -27,16 +27,20 @@ class OriginalMotionSensor:
         self._last_time_bulb_power_on = time.ticks_add(0, -1) / 2 - 1
 
     def setup_ble_connection(self):
+        if self._client.is_connected():
+            print("Already connected to BLE device")
+            return True
+
         try:
             print(f"\n[1/4] Scanning for device: {self._target_mac}")
             if not self._client.scan_for_device(self._target_mac, 15000):
                 print("Device not found")
-                return
+                return False
 
             print("\n[2/4] Connecting to device...")
-            if not self._client.connect_to_target(10000):
+            if not self._client.connect_to_target(5000):
                 print("Connection failed")
-                return
+                return False
             print("Connected")
 
             print("\n[3/4] Discovering services...")
@@ -47,8 +51,9 @@ class OriginalMotionSensor:
             print("Setup complete\n")
         except Exception as e:
             print(f"An error occurred: {e}")
+            return False
 
-        return self._client.is_connected()
+        return True
 
     def disconnect_ble(self):
         print("Starting disconnect process")
@@ -59,19 +64,24 @@ class OriginalMotionSensor:
         """loop logic"""
         self._button.monitor()
         self.__power_off_bulb_based_elapsed_time()
+        self.__power_on_bulb()
+        self.__sync_bulb_status()
 
+    def __power_on_bulb(self):
         if self._motion_sensor.is_motion_detected() and not self._color_bulb.is_powered_on():
             self._last_time_bulb_power_on = time.ticks_ms()
+            print("---- Bulb powerd on by the motion detection ----")
             self._color_bulb.power_on()
-
-        self.__sync_bulb_status()
+            print("---- Bulb powered on successfully ----\n")
 
     def __power_off_bulb_based_elapsed_time(self):
         if (
             self._color_bulb.is_powered_on()
             and time.ticks_diff(time.ticks_ms(), self._last_time_bulb_power_on) > POWER_ON_DURATION
         ):
+            print("---- Bulb powered off due to elapsed time ----")
             self._color_bulb.power_off()
+            print("---- Bulb powered off successfully ----\n")
             self._last_time_bulb_power_on = time.ticks_add(0, -1) / 2 - 1
 
     def __sync_bulb_status(self):
@@ -85,6 +95,8 @@ class OriginalMotionSensor:
                 print("Failed to connect to BLE device")
                 return
 
+        print("---- Syncing bulb status... ----")
         if self._color_bulb.sync_status() is None:
             print("Failed to sync bulb status")
             return
+        print("---- Bulb status synced successfully ----\n")
