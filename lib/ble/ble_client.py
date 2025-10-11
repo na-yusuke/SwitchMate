@@ -36,17 +36,24 @@ class BleClient:
         self._caracteristic_uuid = caracteristic_uuid
 
     def __reset(self):
+        # Connection state
         self._conn_handle = None
+        self._is_connected = False
+
+        # GATT handles
         self._start_handle = None
         self._end_handle = None
         self._char_handle = None
         self._notify_handle = None
-        self._is_connected = False
+
+        # Scan state
         self._scan_callback = None
         self._is_target_found = False
-        self._target_addr_bytes = None
         self._target_addr_type = None
+        self._target_addr_bytes = None
         self._target_data = None
+
+        # Notification state
         self._notification_callback = None
         self._last_notification_data = None
 
@@ -117,7 +124,7 @@ class BleClient:
             try:
                 # Create a proper copy of the data to preserve it outside IRQ context
                 data_copy = bytearray(notify_data)
-                print(f"[GATT] Notification received: {data_copy.hex()}\n")
+                print(f"[GATT] Notification received: {data_copy.hex()}")
                 self._last_notification_data = bytes(data_copy)
                 if self._notification_callback:
                     self._notification_callback(bytes(data_copy))
