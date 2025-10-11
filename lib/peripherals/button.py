@@ -10,30 +10,31 @@ class Button:
         self._pressed_callback = None
         self._last_button_state = 1
 
-    def set_callback(self, _pressed_callback):
-        self._pressed_callback = _pressed_callback
+    def set_callback(self, pressed_callback):
+        print("Setting button callback")
+        self._pressed_callback = pressed_callback
 
     def is_pressed(self):
         return self._is_pressed
 
     def monitor(self):
-        # 現在のボタン状態を読み取り（LOW=0が押下状態）
+        # Read the current button state (LOW=0 means pressed)
         current_button_state = self._button.value()
 
-        # ボタンが押された瞬間を検出（1→0の変化）
+        # Detect the moment the button is pressed (change from 1 to 0)
         if self._last_button_state == 1 and current_button_state == 0:
             if not self._is_pressed:
-                print("ボタンが押されました！")
+                print("Button pressed")
                 self._is_pressed = True
                 if self._pressed_callback:
                     self._pressed_callback()
-        # ボタンが離された瞬間を検出（0→1の変化）
+        # Detect the moment the button is released (change from 0 to 1)
         elif self._last_button_state == 0 and current_button_state == 1:
             if self._is_pressed:
-                print("ボタンが離されました")
+                print("Button released")
                 self._is_pressed = False
 
-        # 前回の状態を更新
+        # Update the last state
         self._last_button_state = current_button_state
-        # チャタリング対策の短い待機
+        # Short delay for debouncing
         time.sleep_ms(50)

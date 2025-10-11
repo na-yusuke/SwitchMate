@@ -7,6 +7,7 @@ from device_config import DEVICE_CONFIG
 from lib.ble import BleClient
 from lib.peripherals import Button, MotionSensor
 from lib.switchbot import ColorBulb
+from utils import safe_reboot
 
 from .constants import COLOR_BULB_CHECK_INTERVAL, POWER_ON_DURATION
 
@@ -19,7 +20,7 @@ class OriginalMotionSensor:
             bluetooth.UUID(SWITCHBOT_CHARACTERISTIC_UUID),
         )
         self._button = Button(25)
-        # self._button.set_callback(self.setup_ble_connection())
+        self._button.set_callback(self.__button_pressed_callback)
         self._motion_sensor = MotionSensor(27)
         self._color_bulb = ColorBulb(self._client)
 
@@ -66,6 +67,9 @@ class OriginalMotionSensor:
         self.__power_off_bulb_based_elapsed_time()
         self.__power_on_bulb()
         self.__sync_bulb_status()
+
+    def __button_pressed_callback(self):
+        safe_reboot()
 
     def __power_on_bulb(self):
         if self._motion_sensor.is_motion_detected() and not self._color_bulb.is_powered_on():
