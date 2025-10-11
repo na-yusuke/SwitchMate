@@ -27,12 +27,9 @@ class OriginalMotionSensor:
         self._motion_sensor = MotionSensor(27)
         self._color_bulb = ColorBulb(self._client)
 
-        self._last_time_checke_bulb_status = time.ticks_ms()
+        self._last_time_check_bulb_status = time.ticks_ms()
         self._last_time_bulb_power_on = time.ticks_add(0, -1) / 2 - 1
-        self._last_acitivity_time = time.ticks_add(0, -1) / 2 - 1
-
-        # Cache of GATT handles
-        self._gatt_setup_done = False
+        self._last_activity_time = time.ticks_add(0, -1) / 2 - 1
 
     def setup_ble_connection(self):
         if self._fast_client.is_connected():
@@ -57,7 +54,7 @@ class OriginalMotionSensor:
 
     def disconnect_ble(self):
         if self._fast_client.is_connected():
-            print("[Optimized] Disconnecting BLE to save power...\n")
+            print("[Optimized] Disconnecting BLE to save power\n")
             self._fast_client.disconnect()
             print("[Optimized] BLE disconnected\n")
 
@@ -69,16 +66,15 @@ class OriginalMotionSensor:
         # Monitor motion sensor
         if self._motion_sensor.is_motion_detected():
             self.__handle_motion_detected()
-            self._last_acitivity_time = time.ticks_ms()
+            self._last_activity_time = time.ticks_ms()
 
         # Auto power off bulb after duration
         self.__power_off_bulb_based_elapsed_time()
 
         # Auto disconnect BLE if idle
         if self._fast_client.is_connected():
-            idle_time = time.ticks_diff(time.ticks_ms(), self._last_acitivity_time)
-            if idle_time > BLE_IDLE_TIMEOUT:
-                print("[Optimized] BLE idle timeout reached, disconnecting...\n")
+            if time.ticks_diff(time.ticks_ms(), self._last_activity_time) > BLE_IDLE_TIMEOUT:
+                print("[Optimized] BLE idle timeout reached, disconnecting")
                 self.disconnect_ble()
 
         # Sync bulb status periodically
@@ -97,7 +93,7 @@ class OriginalMotionSensor:
 
         if not self._color_bulb.is_powered_on():
             self._last_time_bulb_power_on = time.ticks_ms()
-            print("---- Bulb powerd on by the motion detection ----")
+            print("---- Bulb powered on by the motion detection ----")
             self._color_bulb.power_on()
             print("---- Bulb powered on successfully ----\n")
 
@@ -115,11 +111,11 @@ class OriginalMotionSensor:
 
     def __sync_bulb_status(self):
         if (
-            time.ticks_diff(time.ticks_ms(), self._last_time_checke_bulb_status) < COLOR_BULB_CHECK_INTERVAL
+            time.ticks_diff(time.ticks_ms(), self._last_time_check_bulb_status) < COLOR_BULB_CHECK_INTERVAL
             or not self._fast_client.is_connected()
         ):
             return
-        self._last_time_checke_bulb_status = time.ticks_ms()
+        self._last_time_check_bulb_status = time.ticks_ms()
 
         print("---- Syncing bulb status ----")
         if self._color_bulb.sync_status() is None:

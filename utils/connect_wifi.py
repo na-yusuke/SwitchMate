@@ -27,7 +27,7 @@ def init_wifi():
         return False
 
 
-def connect_wifi(ssid, password, timeout=10):
+def connect_wifi(ssid, password, timeout_ms=10000):
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
 
@@ -39,9 +39,9 @@ def connect_wifi(ssid, password, timeout=10):
     print("Connecting to Wi-Fi...")
     wlan.connect(ssid, password)
 
-    start_time = time.time()
+    start = time.ticks_ms()
     while not wlan.isconnected():
-        if time.time() - start_time > timeout:
+        if time.ticks_diff(time.ticks_ms(), start) > timeout_ms:
             print("Wi-Fi connection timeout")
             return False
         time.sleep(0.5)

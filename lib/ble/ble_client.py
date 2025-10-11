@@ -26,14 +26,14 @@ _IRQ_GATTC_INDICATE = const(19)
 
 
 class BleClient:
-    def __init__(self, service_uuid, caracteristic_uuid):
+    def __init__(self, service_uuid, characteristic_uuid):
         self._ble = bluetooth.BLE()
         self._ble.active(True)
         self._ble.irq(self.__irq)
         self.__reset()
 
         self._service_uuid = service_uuid
-        self._caracteristic_uuid = caracteristic_uuid
+        self._characteristic_uuid = characteristic_uuid
 
     def __reset(self):
         # Connection state
@@ -96,7 +96,7 @@ class BleClient:
         elif event == _IRQ_GATTC_CHARACTERISTIC_RESULT:
             conn_handle, def_handle, value_handle, properties, uuid = data
             print(f"Characteristic discovered: {uuid}, handle={value_handle}")
-            if uuid == self._caracteristic_uuid:
+            if uuid == self._characteristic_uuid:
                 self._char_handle = value_handle
                 print(f"SwitchBot Characteristic discovered: handle={value_handle}")
 
@@ -235,7 +235,7 @@ class BleClient:
         """Get address info of the target device"""
         if self._target_addr_bytes is not None:
             return self.__addr_to_str(self._target_addr_bytes), self._target_addr_type
-        return None, None
+        return (None, None)
 
     def get_target_data(self):
         """Get advertisement data of the target device"""

@@ -29,8 +29,7 @@ class FastReconnectClient:
             print("[FastReconnect] Already connected")
             return True
 
-        addr_str, addr_type = self._client.get_addr_info()
-        if addr_str is None or addr_type is None:
+        if self._client.get_addr_info() != (None, None):
             print("[FastReconnect] Trying cached address...")
             if self.__try_direct_connect(connect_timeout_ms):
                 print("[FastReconnect] Connected using cache")
