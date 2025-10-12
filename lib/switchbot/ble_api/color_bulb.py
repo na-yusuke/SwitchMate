@@ -10,9 +10,9 @@ logger = get_logger("ColorBulb")
 
 
 class ColorBulb:
-    def __init__(self, ble_client: BleClient):
-        self._ble_client = ble_client
-        self._status = {
+    def __init__(self, ble_client: BleClient) -> None:
+        self._ble_client: BleClient = ble_client
+        self._status: dict[str, bool | int | str | dict] = {
             "power_on": False,
             "brightness": 0,
             "rgb": {"red": 0, "green": 0, "blue": 0},
@@ -21,29 +21,29 @@ class ColorBulb:
             "raw_data": "",
         }
 
-    def power_on(self):
+    def power_on(self) -> bool:
         """Turn on the bulb"""
         command = bytes([0x57, 0x0F, 0x47, 0x01, 0x01])
         self._status.update(power_on=True)
         return self._ble_client.write_characteristic(command)
 
-    def power_off(self):
+    def power_off(self) -> bool:
         """Turn off the bulb"""
         command = bytes([0x57, 0x0F, 0x47, 0x01, 0x02])
         self._status.update(power_on=False)
         return self._ble_client.write_characteristic(command)
 
-    def is_powered_on(self):
+    def is_powered_on(self) -> bool:
         """Return current power state"""
         return self._status.get("power_on", False)
 
-    def set_brightness(self, brightness):
+    def set_brightness(self, brightness: int) -> bool:
         """Brightness (1-100)"""
         brightness = max(1, min(100, brightness))
         command = bytes([0x57, 0x0F, 0x47, 0x01, 0x14, brightness])
         return self._ble_client.write_characteristic(command)
 
-    def sync_status(self, timeout_ms=5000):
+    def sync_status(self, timeout_ms: int = 5000) -> dict[str, bool | int | str | dict] | None:
         """Read bulb status and return parsed result"""
         # Correct command format: 0x570F4801 (4 bytes)
         command = bytes([0x57, 0x0F, 0x48, 0x01])
@@ -64,7 +64,7 @@ class ColorBulb:
         logger.info("Status synced successfully")
         return self._status
 
-    def __parse_status_response(self, response_data):
+    def __parse_status_response(self, response_data: bytes) -> dict[str, bool | int | str | dict] | None:
         """Parse bulb status response
 
         Response format (11 bytes):
@@ -99,7 +99,7 @@ class ColorBulb:
             "raw_data": response_data.hex(),
         }
 
-    def print_status(self):
+    def print_status(self) -> None:
         """Print formatted status information"""
         if not self._status:
             logger.warning("No status data available")

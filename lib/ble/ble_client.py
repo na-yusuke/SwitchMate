@@ -30,36 +30,36 @@ _IRQ_GATTC_INDICATE = const(19)
 
 
 class BleClient:
-    def __init__(self, service_uuid, characteristic_uuid):
-        self._ble = bluetooth.BLE()
+    def __init__(self, service_uuid: bluetooth.UUID, characteristic_uuid: bluetooth.UUID) -> None:
+        self._ble: bluetooth.BLE = bluetooth.BLE()
         self._ble.active(True)
         self._ble.irq(self.__irq)
         self.__reset()
 
-        self._service_uuid = service_uuid
-        self._characteristic_uuid = characteristic_uuid
+        self._service_uuid: bluetooth.UUID = service_uuid
+        self._characteristic_uuid: bluetooth.UUID = characteristic_uuid
 
-    def __reset(self):
+    def __reset(self) -> None:
         # Connection state
-        self._conn_handle = None
-        self._is_connected = False
+        self._conn_handle: int | None = None
+        self._is_connected: bool = False
 
         # GATT handles
-        self._start_handle = None
-        self._end_handle = None
-        self._char_handle = None
-        self._notify_handle = None
+        self._start_handle: int | None = None
+        self._end_handle: int | None = None
+        self._char_handle: int | None = None
+        self._notify_handle: int | None = None
 
         # Scan state
         self._scan_callback = None
-        self._is_target_found = False
-        self._target_addr_type = None
-        self._target_addr_bytes = None
-        self._target_data = None
+        self._is_target_found: bool = False
+        self._target_addr_type: int | None = None
+        self._target_addr_bytes: bytes | None = None
+        self._target_data: bytes | None = None
 
         # Notification state
         self._notification_callback = None
-        self._last_notification_data = None
+        self._last_notification_data: bytes | None = None
 
     def __irq(self, event, data):
         if event == _IRQ_SCAN_RESULT:
@@ -137,10 +137,10 @@ class BleClient:
                 logger.error(f"Notification error: {e}")
                 self._last_notification_data = None
 
-    def __addr_to_str(self, addr):
+    def __addr_to_str(self, addr: bytes) -> str:
         return ":".join("%02x" % b for b in addr)
 
-    def scan_for_device(self, target_mac, duration_ms=10000):
+    def scan_for_device(self, target_mac: str, duration_ms: int = 10000) -> bool:
         """Scan for device with specific MAC address"""
         self._is_target_found = False
         self._target_addr_bytes = None
@@ -172,7 +172,7 @@ class BleClient:
 
         return self._is_target_found
 
-    def connect_to_target(self, timeout_ms=10000):
+    def connect_to_target(self, timeout_ms: int = 10000) -> bool:
         """Connect to target device found in scan"""
         if not self._is_target_found:
             logger.warning("Target device not found")
@@ -192,7 +192,7 @@ class BleClient:
 
         return self._is_connected
 
-    def disconnect(self, timeout_ms=5000):
+    def disconnect(self, timeout_ms: int = 5000) -> None:
         """Disconnect connection"""
         if self._conn_handle is not None:
             logger.info(f"Disconnecting: handle={self._conn_handle}")
@@ -204,13 +204,15 @@ class BleClient:
                 time.sleep_ms(100)
             self._is_connected = False
 
-    def discover_services(self):
+    def discover_services(self) -> None:
         """Discover services"""
         if self._conn_handle is not None:
             self._ble.gattc_discover_services(self._conn_handle, self._service_uuid)
             time.sleep(1)
 
-    def discover_characteristics(self, start_handle=None, end_handle=None, uuid=None):
+    def discover_characteristics(
+        self, start_handle: int | None = None, end_handle: int | None = None, uuid: bluetooth.UUID | None = None
+    ) -> None:
         """Discover characteristics"""
         if self._conn_handle is not None:
             start = start_handle or self._start_handle or 1
@@ -218,7 +220,7 @@ class BleClient:
             self._ble.gattc_discover_characteristics(self._conn_handle, start, end, uuid)
             time.sleep(1)
 
-    def write_characteristic(self, data, value_handle=None, response=True):
+    def write_characteristic(self, data: bytes, value_handle: int | None = None, response: bool = True) -> bool:
         """Write to characteristic"""
         if self._conn_handle is not None:
             handle = value_handle or self._char_handle
@@ -231,17 +233,17 @@ class BleClient:
                 logger.error("Characteristic handle not found")
         return False
 
-    def is_connected(self):
+    def is_connected(self) -> bool:
         """Check connection status"""
         return self._is_connected
 
-    def get_addr_info(self):
+    def get_addr_info(self) -> tuple[int | None, str | None]:
         """Get address info of the target device"""
         if self._target_addr_bytes is not None:
             return self._target_addr_type, self.__addr_to_str(self._target_addr_bytes)
         return (None, None)
 
-    def restore_addr_info(self, addr_type, addr_str):
+    def restore_addr_info(self, addr_type: int, addr_str: str) -> bool:
         """Restore address info from string and type"""
         try:
             addr_bytes = bytes(int(b, 16) for b in addr_str.split(":"))
@@ -257,19 +259,19 @@ class BleClient:
             logger.error(f"Error restoring address: {e}")
         return False
 
-    def get_target_data(self):
+    def get_target_data(self) -> bytes | None:
         """Get advertisement data of the target device"""
         return self._target_data
 
-    def set_notification_callback(self, callback):
+    def set_notification_callback(self, callback) -> None:
         """Set callback function for notifications"""
         self._notification_callback = callback
 
-    def get_last_notification(self):
+    def get_last_notification(self) -> bytes | None:
         """Get last received notification data"""
         return self._last_notification_data
 
-    def wait_for_notification(self, timeout_ms=5000):
+    def wait_for_notification(self, timeout_ms: int = 5000) -> bytes | None:
         """Wait for notification and return the data"""
         logger.debug(f"Waiting for notification (timeout: {timeout_ms}ms)")
         start_time = time.ticks_ms()

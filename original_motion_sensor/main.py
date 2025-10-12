@@ -2,7 +2,7 @@ import time
 
 import bluetooth
 from esp32 import WAKEUP_ANY_HIGH, wake_on_ext0
-from machine import deepsleep, lightsleep
+from machine import Pin, deepsleep, lightsleep
 
 from device_config import DEVICE_CONFIG
 from lib.ble import BleConnectionManager
@@ -29,38 +29,38 @@ class OriginalMotionSensor:
         motion_sensor: MotionSensor,
         button: Button,
         color_bulb: ColorBulb,
-        pir_pin,
-    ):
-        self._target_mac = DEVICE_CONFIG["color_bulb"]["corridor_light"]["ble_mac_address"]
+        pir_pin: Pin,
+    ) -> None:
+        self._target_mac: str = DEVICE_CONFIG["color_bulb"]["corridor_light"]["ble_mac_address"]
 
-        self._ble_connection_manager = connection_manager
-        self._motion_sensor = motion_sensor
-        self._button = button
-        self._color_bulb = color_bulb
-        self._pir_pin = pir_pin
+        self._ble_connection_manager: BleConnectionManager = connection_manager
+        self._motion_sensor: MotionSensor = motion_sensor
+        self._button: Button = button
+        self._color_bulb: ColorBulb = color_bulb
+        self._pir_pin: Pin = pir_pin
 
         self._button.set_callback(self.__button_pressed_callback)
 
-        self._last_time_check_bulb_status = time.ticks_ms()
-        self._last_time_bulb_power_on = time.ticks_add(0, -1) / 2 - 1
-        self._last_activity_time = time.ticks_add(0, -1) / 2 - 1
+        self._last_time_check_bulb_status: int = time.ticks_ms()
+        self._last_time_bulb_power_on: int = time.ticks_add(0, -1) // 2 - 1
+        self._last_activity_time: int = time.ticks_add(0, -1) // 2 - 1
 
-    def __button_pressed_callback(self):
+    def __button_pressed_callback(self) -> None:
         safe_reboot()
 
-    def setup_ble_connection(self):
+    def setup_ble_connection(self) -> bool:
         if self._ble_connection_manager.ensure_connected():
             return True
 
         return False
 
-    def disconnect_ble(self):
+    def disconnect_ble(self) -> None:
         if self._ble_connection_manager.is_connected():
             logger.info("Disconnecting BLE to save power")
             self._ble_connection_manager.disconnect()
             logger.info("BLE disconnected")
 
-    def run(self):
+    def run(self) -> None:
         """loop logic"""
 
         # Monitor button
@@ -82,7 +82,7 @@ class OriginalMotionSensor:
         # Sync bulb status periodically
         # self.__sync_bulb_status()
 
-    def __handle_motion_detected(self):
+    def __handle_motion_detected(self) -> None:
         if not self._ble_connection_manager.ensure_connected():
             logger.error("Cannot control bulb - connection failed")
             return
@@ -93,7 +93,7 @@ class OriginalMotionSensor:
             self._color_bulb.power_on()
             logger.debug("Bulb powered on successfully")
 
-    def __power_off_bulb_based_elapsed_time(self):
+    def __power_off_bulb_based_elapsed_time(self) -> None:
         if (
             self._color_bulb.is_powered_on()
             and time.ticks_diff(time.ticks_ms(), self._last_time_bulb_power_on) > POWER_ON_DURATION
@@ -103,9 +103,9 @@ class OriginalMotionSensor:
             logger.debug("Bulb powered off due to elapsed time")
             self._color_bulb.power_off()
             logger.debug("Bulb powered off successfully")
-            self._last_time_bulb_power_on = time.ticks_add(0, -1) / 2 - 1
+            self._last_time_bulb_power_on = time.ticks_add(0, -1) // 2 - 1
 
-    def __sync_bulb_status(self):
+    def __sync_bulb_status(self) -> None:
         if (
             time.ticks_diff(time.ticks_ms(), self._last_time_check_bulb_status) < COLOR_BULB_CHECK_INTERVAL
             or not self._ble_connection_manager.is_connected()
@@ -119,7 +119,7 @@ class OriginalMotionSensor:
             return
         logger.debug("Bulb status synced successfully")
 
-    def __enter_light_sleep(self):
+    def __enter_light_sleep(self) -> None:
         """Enter light sleep mode (wake on GPIO interrupt)"""
         logger.info("No activity detected for a while, entering light sleep)")
 
@@ -133,7 +133,7 @@ class OriginalMotionSensor:
 
         lightsleep(LIGHT_SLEEP_DURATION)
 
-    def __enter_deep_sleep(self):
+    def __enter_deep_sleep(self) -> None:
         """Enter deep sleep mode"""
         logger.info("No activity detected for a while, entering deep sleep")
 

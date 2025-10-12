@@ -22,24 +22,23 @@ logger = get_logger("BleConnectionManager")
 class BleConnectionManager:
     """BLE Client wrapper for fast reconnection and lifecycle management"""
 
-    def __init__(self, ble_client, target_mac=None):
+    def __init__(self, ble_client: BleClient, target_mac: str | None = None) -> None:
         """
         Initialize BleConnectionManager
 
         Args:
             ble_client: BleClient instance
             target_mac: Target device MAC address (optional, can be set later)
-            max_retries: Maximum connection retry attempts
         """
         self._client: BleClient = ble_client
-        self._target_mac = target_mac
-        self._rtc = RTC()
+        self._target_mac: str | None = target_mac
+        self._rtc: RTC = RTC()
 
-    def set_target_mac(self, target_mac):
+    def set_target_mac(self, target_mac: str) -> None:
         """Set target MAC address"""
         self._target_mac = target_mac
 
-    def ensure_connected(self):
+    def ensure_connected(self) -> bool:
         """
         Ensure BLE connection is established and healthy
 
@@ -67,14 +66,16 @@ class BleConnectionManager:
         # Attempt connection with retry
         return self.__connect_with_retry()
 
-    def __connect_with_retry(self, max_retries=5, scan_timeout_ms=3000, connect_timeout_ms=5000):
+    def __connect_with_retry(
+        self, max_retries: int = 5, scan_timeout_ms: int = 3000, connect_timeout_ms: int = 5000
+    ) -> bool:
         """
         Attempt connection with retry logic
 
         Args:
-            target_mac: Target MAC address
-            scan_timeout_ms: Scan timeout
-            connect_timeout_ms: Connection timeout
+            max_retries: Maximum number of retry attempts
+            scan_timeout_ms: Scan timeout in milliseconds
+            connect_timeout_ms: Connection timeout in milliseconds
 
         Returns:
             bool: True if connection succeeded
@@ -95,17 +96,13 @@ class BleConnectionManager:
         logger.error("All connection attempts failed")
         return False
 
-    def __connect_with_cache(self, scan_timeout_ms=3000, connect_timeout_ms=5000):
+    def __connect_with_cache(self, scan_timeout_ms: int = 3000, connect_timeout_ms: int = 5000) -> bool:
         """
         Reconnect to a BLE device using cached address if possible, otherwise scan and connect.
 
-        Note: This method is kept for backward compatibility.
-        Consider using ensure_connected() for simpler usage.
-
         Args:
-            target_mac: target MAC address (string format, e.g. "AA:BB:CC:DD:EE:FF")
-            scan_timeout_ms: scan timeout
-            connect_timeout_ms: connection timeout
+            scan_timeout_ms: Scan timeout in milliseconds
+            connect_timeout_ms: Connection timeout in milliseconds
 
         Returns:
             bool: True if connected, False otherwise
@@ -144,7 +141,7 @@ class BleConnectionManager:
 
         return True
 
-    def prepare_for_sleep(self):
+    def prepare_for_sleep(self) -> None:
         """
         Prepare for entering sleep mode
 
@@ -163,7 +160,7 @@ class BleConnectionManager:
             logger.info("Disconnecting BLE before sleep")
             self._client.disconnect()
 
-    def __cache_addr_info(self):
+    def __cache_addr_info(self) -> None:
         """Cache BLE address info to RTC memory for fast reconnection"""
         try:
             addr_type, addr_str = self._client.get_addr_info()
@@ -174,7 +171,7 @@ class BleConnectionManager:
         except Exception as e:
             logger.error(f"Failed to cache address info: {e}")
 
-    def __restore_addr_cache(self):
+    def __restore_addr_cache(self) -> None:
         """Restore BLE address info from RTC memory"""
         try:
             mem = self._rtc.memory()
@@ -191,7 +188,7 @@ class BleConnectionManager:
         except Exception as e:
             logger.error(f"Failed to restore address info: {e}")
 
-    def __try_direct_connect(self, timeout_ms):
+    def __try_direct_connect(self, timeout_ms: int) -> bool:
         """Attempt direct connection using cached address"""
         try:
             return self._client.connect_to_target(timeout_ms)
@@ -199,15 +196,15 @@ class BleConnectionManager:
             logger.error(f"Direct connect error: {e}")
             return False
 
-    def is_connected(self):
+    def is_connected(self) -> bool:
         """Check connection status"""
         return self._client.is_connected()
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         """Disconnect from the BLE device"""
         self._client.disconnect()
 
     @property
-    def client(self):
+    def client(self) -> BleClient:
         """Access the underlying BleClient instance"""
         return self._client

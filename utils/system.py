@@ -7,7 +7,7 @@ from lib.logger import get_logger
 logger = get_logger("System")
 
 
-def reboot(delay_sec=0):
+def reboot(delay_sec: int = 0) -> None:
     """
     Reboot ESP32 after an optional delay.
 
@@ -22,7 +22,7 @@ def reboot(delay_sec=0):
     machine.reset()
 
 
-def safe_reboot():
+def safe_reboot() -> None:
     """Safely reboot the ESP32 by deactivating BLE if active."""
     try:
         import bluetooth

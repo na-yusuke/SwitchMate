@@ -8,20 +8,20 @@ logger = get_logger("Button")
 
 
 class Button:
-    def __init__(self, pin):
-        self._button = Pin(pin, Pin.IN, Pin.PULL_UP)
-        self._is_pressed = False
-        self._pressed_callback = None
-        self._last_button_state = 1
+    def __init__(self, pin: int) -> None:
+        self._button: Pin = Pin(pin, Pin.IN, Pin.PULL_UP)
+        self._is_pressed: bool = False
+        self._pressed_callback = None  # Callback function (MicroPython doesn't support Callable type hint)
+        self._last_button_state: int = 1
 
-    def set_callback(self, pressed_callback):
+    def set_callback(self, pressed_callback) -> None:
         logger.debug("Setting button callback")
         self._pressed_callback = pressed_callback
 
-    def is_pressed(self):
+    def is_pressed(self) -> bool:
         return self._is_pressed
 
-    def monitor(self):
+    def monitor(self) -> None:
         # Read the current button state (LOW=0 means pressed)
         current_button_state = self._button.value()
 
