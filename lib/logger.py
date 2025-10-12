@@ -1,6 +1,5 @@
 """
 Lightweight logging system for MicroPython
-Power-efficient and memory-optimized logging system
 """
 
 import time
@@ -18,7 +17,7 @@ class LogLevel:
 
 
 class Logger:
-    """Lightweight logger class"""
+    """Logger class"""
 
     # Class variables (shared across all instances)
     _global_level = LogLevel.INFO
