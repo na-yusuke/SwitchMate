@@ -3,13 +3,14 @@
 https://github.com/OpenWonderLabs/SwitchBotAPI-BLE/blob/latest/devicetypes/colorbulb.md
 """
 
+from lib.ble import BleClient
 from lib.logger import get_logger
 
 logger = get_logger("ColorBulb")
 
 
 class ColorBulb:
-    def __init__(self, ble_client):
+    def __init__(self, ble_client: BleClient):
         self._ble_client = ble_client
         self._status = {
             "power_on": False,

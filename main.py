@@ -1,6 +1,6 @@
-from original_motion_sensor.main import OriginalMotionSensor
+from original_motion_sensor.factory import create_original_motion_sensor
 
-original_motion_sensor = OriginalMotionSensor()
+original_motion_sensor = create_original_motion_sensor()
 
 
 def setup():

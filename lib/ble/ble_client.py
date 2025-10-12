@@ -243,7 +243,6 @@ class BleClient:
 
     def restore_addr_info(self, addr_type, addr_str):
         """Restore address info from string and type"""
-        print(addr_str)
         try:
             addr_bytes = bytes(int(b, 16) for b in addr_str.split(":"))
             if len(addr_bytes) == 6:

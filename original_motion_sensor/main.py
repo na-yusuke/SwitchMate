@@ -2,11 +2,10 @@ import time
 
 import bluetooth
 from esp32 import WAKEUP_ANY_HIGH, wake_on_ext0
-from machine import RTC, Pin, deepsleep, lightsleep
+from machine import deepsleep, lightsleep
 
-from config import SWITCHBOT_CHARACTERISTIC_UUID, SWITCHBOT_SERVICE_UUID
-from device_config import DEVICE_CONFIG, MICROCONTROLLER_PIN_CONFIG
-from lib.ble import BleClient, BleConnectionManager
+from device_config import DEVICE_CONFIG
+from lib.ble import BleConnectionManager
 from lib.logger import get_logger
 from lib.peripherals import Button, MotionSensor
 from lib.switchbot import ColorBulb
@@ -24,22 +23,23 @@ logger = get_logger("OriginalMotionSensor")
 
 
 class OriginalMotionSensor:
-    def __init__(self):
+    def __init__(
+        self,
+        connection_manager: BleConnectionManager,
+        motion_sensor: MotionSensor,
+        button: Button,
+        color_bulb: ColorBulb,
+        pir_pin,
+    ):
         self._target_mac = DEVICE_CONFIG["color_bulb"]["corridor_light"]["ble_mac_address"]
 
-        self._client = BleClient(
-            bluetooth.UUID(SWITCHBOT_SERVICE_UUID),
-            bluetooth.UUID(SWITCHBOT_CHARACTERISTIC_UUID),
-        )
-        self._ble_connection_manager = BleConnectionManager(self._client, self._target_mac)
+        self._ble_connection_manager = connection_manager
+        self._motion_sensor = motion_sensor
+        self._button = button
+        self._color_bulb = color_bulb
+        self._pir_pin = pir_pin
 
-        self._pir_pin = Pin(MICROCONTROLLER_PIN_CONFIG["motion_sensor"], Pin.IN)
-        self._rtc = RTC()
-
-        self._button = Button(MICROCONTROLLER_PIN_CONFIG["button"])
         self._button.set_callback(self.__button_pressed_callback)
-        self._motion_sensor = MotionSensor(MICROCONTROLLER_PIN_CONFIG["motion_sensor"])
-        self._color_bulb = ColorBulb(self._client)
 
         self._last_time_check_bulb_status = time.ticks_ms()
         self._last_time_bulb_power_on = time.ticks_add(0, -1) / 2 - 1
