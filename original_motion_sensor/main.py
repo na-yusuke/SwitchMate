@@ -35,7 +35,6 @@ class OriginalMotionSensor:
         self._fast_client = FastReconnectClient(self._client)
 
         self._pir_pin = Pin(MICROCONTROLLER_PIN_CONFIG["motion_sensor"], Pin.IN)
-        self._button_pin = Pin(MICROCONTROLLER_PIN_CONFIG["button"], Pin.IN, Pin.PULL_UP)
         self._rtc = RTC()
 
         self._button = Button(MICROCONTROLLER_PIN_CONFIG["button"])
@@ -93,10 +92,10 @@ class OriginalMotionSensor:
             self.__handle_motion_detected()
             self._last_activity_time = time.ticks_ms()
         else:
-            if time.ticks_diff(time.ticks_ms(), self._last_activity_time) > LIGHT_SLEEP_THRESHOLD:
-                self.__enter_light_sleep()
             if time.ticks_diff(time.ticks_ms(), self._last_activity_time) > DEEP_SLEEP_THRESHOLD:
                 self.__enter_deep_sleep()
+            if time.ticks_diff(time.ticks_ms(), self._last_activity_time) > LIGHT_SLEEP_THRESHOLD:
+                self.__enter_light_sleep()
 
         # Sync bulb status periodically
         # self.__sync_bulb_status()
@@ -142,6 +141,9 @@ class OriginalMotionSensor:
     def __enter_light_sleep(self):
         """Enter light sleep mode (wake on GPIO interrupt)"""
         logger.info("No activity detected for a while, entering light sleep)")
+
+        if self._fast_client.is_connected():
+            self._fast_client.disconnect()
 
         # Waiting for motion sensor to go low
         while self._pir_pin.value() == 1:
