@@ -1,4 +1,3 @@
-import json
 import time
 
 import bluetooth
@@ -7,7 +6,7 @@ from machine import RTC, Pin, deepsleep, lightsleep
 
 from config import SWITCHBOT_CHARACTERISTIC_UUID, SWITCHBOT_SERVICE_UUID
 from device_config import DEVICE_CONFIG, MICROCONTROLLER_PIN_CONFIG
-from lib.ble import BleClient, FastReconnectClient
+from lib.ble import BleClient, BleConnectionManager
 from lib.logger import get_logger
 from lib.peripherals import Button, MotionSensor
 from lib.switchbot import ColorBulb
@@ -32,7 +31,7 @@ class OriginalMotionSensor:
             bluetooth.UUID(SWITCHBOT_SERVICE_UUID),
             bluetooth.UUID(SWITCHBOT_CHARACTERISTIC_UUID),
         )
-        self._fast_client = FastReconnectClient(self._client)
+        self._ble_connection_manager = BleConnectionManager(self._client, self._target_mac)
 
         self._pir_pin = Pin(MICROCONTROLLER_PIN_CONFIG["motion_sensor"], Pin.IN)
         self._rtc = RTC()
@@ -50,32 +49,15 @@ class OriginalMotionSensor:
         safe_reboot()
 
     def setup_ble_connection(self):
-        if self._fast_client.is_connected():
-            logger.info("Already connected to BLE device")
+        if self._ble_connection_manager.ensure_connected():
             return True
 
-        self.__restore_ble_addr_info()
-
-        try:
-            logger.info(f"Scanning for device: {self._target_mac}")
-
-            if not self._fast_client.connect_with_cache(
-                self._target_mac,
-            ):
-                logger.error("Connection failed")
-                return False
-
-            logger.info("Setup complete")
-        except Exception as e:
-            logger.error(f"An error occurred: {e}")
-            return False
-
-        return True
+        return False
 
     def disconnect_ble(self):
-        if self._fast_client.is_connected():
+        if self._ble_connection_manager.is_connected():
             logger.info("Disconnecting BLE to save power")
-            self._fast_client.disconnect()
+            self._ble_connection_manager.disconnect()
             logger.info("BLE disconnected")
 
     def run(self):
@@ -101,33 +83,32 @@ class OriginalMotionSensor:
         # self.__sync_bulb_status()
 
     def __handle_motion_detected(self):
-        if not self._fast_client.is_connected():
-            if not self.setup_ble_connection():
-                logger.error("Cannot control bulb - connection failed")
-                return
+        if not self._ble_connection_manager.ensure_connected():
+            logger.error("Cannot control bulb - connection failed")
+            return
 
         if not self._color_bulb.is_powered_on():
             self._last_time_bulb_power_on = time.ticks_ms()
-            logger.info("Bulb powered on by motion detection")
+            logger.debug("Bulb powered on by motion detection")
             self._color_bulb.power_on()
-            logger.info("Bulb powered on successfully")
+            logger.debug("Bulb powered on successfully")
 
     def __power_off_bulb_based_elapsed_time(self):
         if (
             self._color_bulb.is_powered_on()
             and time.ticks_diff(time.ticks_ms(), self._last_time_bulb_power_on) > POWER_ON_DURATION
         ):
-            if not self._fast_client.is_connected() and not self.setup_ble_connection():
+            if not self._ble_connection_manager.ensure_connected():
                 return
-            logger.info("Bulb powered off due to elapsed time")
+            logger.debug("Bulb powered off due to elapsed time")
             self._color_bulb.power_off()
-            logger.info("Bulb powered off successfully")
+            logger.debug("Bulb powered off successfully")
             self._last_time_bulb_power_on = time.ticks_add(0, -1) / 2 - 1
 
     def __sync_bulb_status(self):
         if (
             time.ticks_diff(time.ticks_ms(), self._last_time_check_bulb_status) < COLOR_BULB_CHECK_INTERVAL
-            or not self._fast_client.is_connected()
+            or not self._ble_connection_manager.is_connected()
         ):
             return
         self._last_time_check_bulb_status = time.ticks_ms()
@@ -142,8 +123,7 @@ class OriginalMotionSensor:
         """Enter light sleep mode (wake on GPIO interrupt)"""
         logger.info("No activity detected for a while, entering light sleep)")
 
-        if self._fast_client.is_connected():
-            self._fast_client.disconnect()
+        self._ble_connection_manager.prepare_for_sleep()
 
         # Waiting for motion sensor to go low
         while self._pir_pin.value() == 1:
@@ -157,17 +137,11 @@ class OriginalMotionSensor:
         """Enter deep sleep mode"""
         logger.info("No activity detected for a while, entering deep sleep")
 
+        self._ble_connection_manager.prepare_for_sleep()
+
         # Waiting for motion sensor to go low
         while self._pir_pin.value() == 1:
             time.sleep_ms(100)
-
-        # Cache address info for fast reconnection after waking up
-        (
-            addr_type,
-            addr_bytes,
-        ) = self._fast_client.client.get_addr_info()
-        if addr_type is not None or addr_bytes is not None:
-            self._rtc.memory(json.dumps({"addr_type": addr_type, "addr_bytes": addr_bytes}).encode())
 
         wake_on_ext0(pin=self._pir_pin, level=WAKEUP_ANY_HIGH)
 
@@ -178,18 +152,3 @@ class OriginalMotionSensor:
             pass
 
         deepsleep()
-
-    def __restore_ble_addr_info(self):
-        """Restore BLE address info from RTC memory for fast reconnection"""
-        try:
-            mem = self._rtc.memory()
-            if not mem:
-                return
-            data = json.loads(mem.decode())
-            addr_type = data.get("addr_type")
-            addr_bytes = data.get("addr_bytes")
-            if addr_type is not None and addr_bytes is not None:
-                self._fast_client.client.restore_addr_info(addr_type, addr_bytes)
-                logger.info("Restored BLE address info from RTC memory")
-        except Exception as e:
-            logger.error(f"Failed to restore BLE address info: {e}")

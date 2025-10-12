@@ -1,7 +1,7 @@
 # SwitchMate Library Package
 
 # BLE
-from .ble import BleClient, FastReconnectClient
+from .ble import BleClient, BleConnectionManager
 
 # Peripherals
 from .peripherals import Button, MotionSensor
@@ -13,7 +13,7 @@ __version__ = "1.0.0"
 __all__ = [
     # BLE
     "BleClient",
-    "FastReconnectClient",
+    "BleConnectionManager",
     # Peripherals
     "Button",
     "MotionSensor",
