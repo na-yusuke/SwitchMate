@@ -7,5 +7,7 @@ hours = 60 * minutes
 
 POWER_ON_DURATION = 5 * seconds
 COLOR_BULB_CHECK_INTERVAL = 10 * seconds
-# BLE_IDLE_TIMEOUT = 10 * minutes
-BLE_IDLE_TIMEOUT = 10 * seconds
+
+LIGHT_SLEEP_DURATION = 30 * seconds
+LIGHT_SLEEP_THRESHOLD = 1.5 * minutes
+DEEP_SLEEP_THRESHOLD = 30 * minutes

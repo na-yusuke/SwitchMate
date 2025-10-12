@@ -238,8 +238,25 @@ class BleClient:
     def get_addr_info(self):
         """Get address info of the target device"""
         if self._target_addr_bytes is not None:
-            return self.__addr_to_str(self._target_addr_bytes), self._target_addr_type
+            return self._target_addr_type, self.__addr_to_str(self._target_addr_bytes)
         return (None, None)
+
+    def restore_addr_info(self, addr_type, addr_str):
+        """Restore address info from string and type"""
+        print(addr_str)
+        try:
+            addr_bytes = bytes(int(b, 16) for b in addr_str.split(":"))
+            if len(addr_bytes) == 6:
+                self._target_addr_type = addr_type
+                self._target_addr_bytes = addr_bytes
+                self._is_target_found = True
+                logger.info(f"Restored address: {addr_str}, type: {addr_type}")
+                return True
+            else:
+                logger.error("Invalid address format")
+        except Exception as e:
+            logger.error(f"Error restoring address: {e}")
+        return False
 
     def get_target_data(self):
         """Get advertisement data of the target device"""
