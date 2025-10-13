@@ -1,7 +1,7 @@
 import machine
 import network
 
-from lib.logger import LogLevel, configure
+from utils import LogLevel, configure
 
 # Downclock the CPU frequency to 80MHz for power saving
 machine.freq(80000000)

@@ -1,6 +1,5 @@
-# original_motion_sensor/automation_service.py
 """
-Automation business logic (pure business rules)
+Automation business logic
 """
 
 import time
@@ -49,7 +48,7 @@ class BulbAutomationService:
         elapsed = time.ticks_diff(time.ticks_ms(), self._last_check_status_time)
         return elapsed > self._check_status_duration_ms
 
-    def record_last_power_on_time(self):
+    def record_last_power_on_time(self) -> None:
         """Record the last power on time"""
         self._last_power_on_time = time.ticks_ms()
 

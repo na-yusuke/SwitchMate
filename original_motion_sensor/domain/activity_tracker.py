@@ -5,7 +5,7 @@ Activity tracking for sleep management
 import time
 
 
-class ActivityTracker:
+class SleepActivityTracker:
     """
     Track user activity for sleep mode decisions
     """

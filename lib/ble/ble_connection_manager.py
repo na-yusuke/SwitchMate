@@ -14,7 +14,7 @@ import time
 from machine import RTC
 
 from lib.ble import BleClient
-from lib.logger import get_logger
+from utils import get_logger
 
 logger = get_logger("BleConnectionManager")
 

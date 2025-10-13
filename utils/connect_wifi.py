@@ -2,7 +2,7 @@ import time
 
 import network
 
-from lib.logger import get_logger
+from .logger import get_logger
 
 logger = get_logger("connect_wifi")
 

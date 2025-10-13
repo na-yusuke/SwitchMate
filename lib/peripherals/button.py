@@ -2,7 +2,7 @@ import time
 
 from machine import Pin
 
-from lib.logger import get_logger
+from utils import get_logger
 
 logger = get_logger("Button")
 

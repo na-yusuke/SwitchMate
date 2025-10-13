@@ -2,7 +2,7 @@ import time
 
 import machine
 
-from lib.logger import get_logger
+from .logger import get_logger
 
 logger = get_logger("System")
 

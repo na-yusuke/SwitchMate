@@ -6,20 +6,18 @@ from machine import Pin, deepsleep, lightsleep
 
 from device_config import DEVICE_CONFIG
 from lib.ble import BleConnectionManager
-from lib.logger import get_logger
 from lib.peripherals import Button, MotionSensor
 from lib.switchbot import ColorBulb
-from utils import safe_reboot
+from utils import get_logger, safe_reboot
 
-from .activity_tracker import ActivityTracker
-from .automation_service import BulbAutomationService
-from .constants import (
+from ..config.constants import (
     COLOR_BULB_CHECK_INTERVAL,
     DEEP_SLEEP_THRESHOLD,
     LIGHT_SLEEP_DURATION,
     LIGHT_SLEEP_THRESHOLD,
     POWER_ON_DURATION,
 )
+from ..domain import BulbAutomationService, SleepActivityTracker
 
 logger = get_logger("OriginalMotionSensor")
 
@@ -46,7 +44,9 @@ class OriginalMotionSensor:
         self._bulb_automation_service: BulbAutomationService = BulbAutomationService(
             POWER_ON_DURATION, COLOR_BULB_CHECK_INTERVAL
         )
-        self._activity_tracker: ActivityTracker = ActivityTracker(LIGHT_SLEEP_THRESHOLD, DEEP_SLEEP_THRESHOLD)
+        self._sleep_activity_tracker: SleepActivityTracker = SleepActivityTracker(
+            LIGHT_SLEEP_THRESHOLD, DEEP_SLEEP_THRESHOLD
+        )
 
         self._button.set_callback(self.__button_pressed_callback)
 
@@ -77,11 +77,11 @@ class OriginalMotionSensor:
         # Monitor motion sensor
         if self._motion_sensor.is_motion_detected():
             self.__handle_motion_detected()
-            self._activity_tracker.record_activity()
+            self._sleep_activity_tracker.record_activity()
         else:
-            if self._activity_tracker.should_enter_deep_sleep():
+            if self._sleep_activity_tracker.should_enter_deep_sleep():
                 self.__enter_deep_sleep()
-            elif self._activity_tracker.should_enter_light_sleep():
+            elif self._sleep_activity_tracker.should_enter_light_sleep():
                 self.__enter_light_sleep()
 
     def __check_auto_power_off(self) -> None:

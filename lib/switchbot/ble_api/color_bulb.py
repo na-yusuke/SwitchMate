@@ -4,7 +4,7 @@ https://github.com/OpenWonderLabs/SwitchBotAPI-BLE/blob/latest/devicetypes/color
 """
 
 from lib.ble import BleClient
-from lib.logger import get_logger
+from utils import get_logger
 
 logger = get_logger("ColorBulb")
 

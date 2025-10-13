@@ -6,7 +6,7 @@ from device_config import DEVICE_CONFIG, MICROCONTROLLER_PIN_CONFIG
 from lib.ble import BleClient, BleConnectionManager
 from lib.peripherals import Button, MotionSensor
 from lib.switchbot import ColorBulb
-from original_motion_sensor.main import OriginalMotionSensor
+from original_motion_sensor.application import OriginalMotionSensor
 
 
 def create_original_motion_sensor():

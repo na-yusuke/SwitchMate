@@ -1,4 +1,4 @@
-from lib.logger import get_logger
+from utils import get_logger
 
 from .base import BaseApi
 
