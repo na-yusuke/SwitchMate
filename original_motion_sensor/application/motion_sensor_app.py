@@ -5,10 +5,10 @@ from esp32 import WAKEUP_ANY_HIGH, wake_on_ext0
 from machine import Pin, deepsleep, lightsleep
 
 from device_config import DEVICE_CONFIG
-from lib.ble import BleConnectionManager
-from lib.peripherals import Button, MotionSensor
-from lib.switchbot import ColorBulb
-from utils import get_logger, safe_reboot
+from infrastructure.ble import BleConnectionManager
+from infrastructure.hardware import Button, MotionSensor
+from infrastructure.switchbot import ColorBulb
+from shared import get_logger, safe_reboot
 
 from ..config.constants import (
     COLOR_BULB_CHECK_INTERVAL,

@@ -1,5 +1,5 @@
 from original_motion_sensor.factory import create_original_motion_sensor
-from utils import get_logger
+from shared import get_logger
 
 original_motion_sensor = create_original_motion_sensor()
 

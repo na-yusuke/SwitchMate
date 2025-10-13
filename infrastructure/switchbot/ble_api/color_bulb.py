@@ -3,8 +3,8 @@
 https://github.com/OpenWonderLabs/SwitchBotAPI-BLE/blob/latest/devicetypes/colorbulb.md
 """
 
-from lib.ble import BleClient
-from utils import get_logger
+from infrastructure.ble import BleClient
+from shared import get_logger
 
 logger = get_logger("ColorBulb")
 

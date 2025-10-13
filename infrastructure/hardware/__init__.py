@@ -1,4 +1,4 @@
-# Peripheral Package
+# Hardware Package
 from .button import Button
 from .motion_sensor import MotionSensor
 

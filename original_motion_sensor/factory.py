@@ -3,9 +3,9 @@ from machine import Pin
 
 from config import SWITCHBOT_CHARACTERISTIC_UUID, SWITCHBOT_SERVICE_UUID
 from device_config import DEVICE_CONFIG, MICROCONTROLLER_PIN_CONFIG
-from lib.ble import BleClient, BleConnectionManager
-from lib.peripherals import Button, MotionSensor
-from lib.switchbot import ColorBulb
+from infrastructure.ble import BleClient, BleConnectionManager
+from infrastructure.hardware import Button, MotionSensor
+from infrastructure.switchbot import ColorBulb
 from original_motion_sensor.application import OriginalMotionSensor
 
 

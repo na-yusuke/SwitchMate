@@ -1,10 +1,12 @@
-# SwitchMate Library Package
+"""
+Infrastructure Layer - External system adapters and hardware abstractions
+"""
 
 # BLE
 from .ble import BleClient, BleConnectionManager
 
-# Peripherals
-from .peripherals import Button, MotionSensor
+# Hardware
+from .hardware import Button, MotionSensor
 
 # SwitchBot API
 from .switchbot import ColorBulb, DeviceApi, SceneApi, WebhookApi
@@ -14,7 +16,7 @@ __all__ = [
     # BLE
     "BleClient",
     "BleConnectionManager",
-    # Peripherals
+    # Hardware
     "Button",
     "MotionSensor",
     # SwitchBot API

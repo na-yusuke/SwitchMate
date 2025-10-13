@@ -3,7 +3,7 @@ import time
 import bluetooth
 from micropython import const
 
-from utils import get_logger
+from shared import get_logger
 
 logger = get_logger("BleClient")
 

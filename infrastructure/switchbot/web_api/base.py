@@ -7,7 +7,7 @@ import ujson
 import urequests
 
 from config import SWITCHBOT_API_CLIENT_SECRET, SWITCHBOT_API_TOKEN, SWITCHBOT_BASE_URL
-from utils import get_logger, hmac
+from shared import get_logger, hmac
 
 logger = get_logger("BaseApi")
 
