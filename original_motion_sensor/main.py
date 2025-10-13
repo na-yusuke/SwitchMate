@@ -11,6 +11,8 @@ from lib.peripherals import Button, MotionSensor
 from lib.switchbot import ColorBulb
 from utils import safe_reboot
 
+from .activity_tracker import ActivityTracker
+from .automation_service import BulbAutomationService
 from .constants import (
     COLOR_BULB_CHECK_INTERVAL,
     DEEP_SLEEP_THRESHOLD,
@@ -33,17 +35,20 @@ class OriginalMotionSensor:
     ) -> None:
         self._target_mac: str = DEVICE_CONFIG["color_bulb"]["corridor_light"]["ble_mac_address"]
 
+        # Infrastructure
         self._ble_connection_manager: BleConnectionManager = connection_manager
         self._motion_sensor: MotionSensor = motion_sensor
         self._button: Button = button
         self._color_bulb: ColorBulb = color_bulb
         self._pir_pin: Pin = pir_pin
 
-        self._button.set_callback(self.__button_pressed_callback)
+        # Business logic
+        self._bulb_automation_service: BulbAutomationService = BulbAutomationService(
+            POWER_ON_DURATION, COLOR_BULB_CHECK_INTERVAL
+        )
+        self._activity_tracker: ActivityTracker = ActivityTracker(LIGHT_SLEEP_THRESHOLD, DEEP_SLEEP_THRESHOLD)
 
-        self._last_time_check_bulb_status: int = time.ticks_ms()
-        self._last_time_bulb_power_on: int = time.ticks_add(0, -1) // 2 - 1
-        self._last_activity_time: int = time.ticks_add(0, -1) // 2 - 1
+        self._button.set_callback(self.__button_pressed_callback)
 
     def __button_pressed_callback(self) -> None:
         safe_reboot()
@@ -67,20 +72,36 @@ class OriginalMotionSensor:
         self._button.monitor()
 
         # Auto power off bulb after duration
-        self.__power_off_bulb_based_elapsed_time()
+        self.__check_auto_power_off()
 
         # Monitor motion sensor
         if self._motion_sensor.is_motion_detected():
             self.__handle_motion_detected()
-            self._last_activity_time = time.ticks_ms()
+            self._activity_tracker.record_activity()
         else:
-            if time.ticks_diff(time.ticks_ms(), self._last_activity_time) > DEEP_SLEEP_THRESHOLD:
+            if self._activity_tracker.should_enter_deep_sleep():
                 self.__enter_deep_sleep()
-            if time.ticks_diff(time.ticks_ms(), self._last_activity_time) > LIGHT_SLEEP_THRESHOLD:
+            elif self._activity_tracker.should_enter_light_sleep():
                 self.__enter_light_sleep()
 
-        # Sync bulb status periodically
-        # self.__sync_bulb_status()
+    def __check_auto_power_off(self) -> None:
+        """
+        Check if bulb should auto power off
+        """
+        if not self._color_bulb.is_powered_on():
+            return
+
+        if not self._bulb_automation_service.should_power_off_bulb():
+            return
+
+        if not self._ble_connection_manager.ensure_connected():
+            return
+
+        logger.debug("Bulb powered off due to elapsed time")
+        self._color_bulb.power_off()
+        logger.debug("Bulb powered off successfully")
+
+        self._bulb_automation_service.reset_power_on_time()
 
     def __handle_motion_detected(self) -> None:
         if not self._ble_connection_manager.ensure_connected():
@@ -88,32 +109,17 @@ class OriginalMotionSensor:
             return
 
         if not self._color_bulb.is_powered_on():
-            self._last_time_bulb_power_on = time.ticks_ms()
             logger.debug("Bulb powered on by motion detection")
+            self._bulb_automation_service.record_last_power_on_time()
             self._color_bulb.power_on()
             logger.debug("Bulb powered on successfully")
 
-    def __power_off_bulb_based_elapsed_time(self) -> None:
-        if (
-            self._color_bulb.is_powered_on()
-            and time.ticks_diff(time.ticks_ms(), self._last_time_bulb_power_on) > POWER_ON_DURATION
-        ):
-            if not self._ble_connection_manager.ensure_connected():
-                return
-            logger.debug("Bulb powered off due to elapsed time")
-            self._color_bulb.power_off()
-            logger.debug("Bulb powered off successfully")
-            self._last_time_bulb_power_on = time.ticks_add(0, -1) // 2 - 1
-
     def __sync_bulb_status(self) -> None:
-        if (
-            time.ticks_diff(time.ticks_ms(), self._last_time_check_bulb_status) < COLOR_BULB_CHECK_INTERVAL
-            or not self._ble_connection_manager.is_connected()
-        ):
+        if not self._bulb_automation_service.should_get_bulb_status():
             return
-        self._last_time_check_bulb_status = time.ticks_ms()
 
         logger.debug("Syncing bulb status")
+        self._bulb_automation_service.record_last_check_status_time()
         if self._color_bulb.sync_status() is None:
             logger.warning("Failed to sync bulb status")
             return
