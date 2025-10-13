@@ -4,7 +4,6 @@ import bluetooth
 from esp32 import WAKEUP_ANY_HIGH, wake_on_ext0
 from machine import Pin, deepsleep, lightsleep
 
-from device_config import DEVICE_CONFIG
 from infrastructure.ble import BleConnectionManager
 from infrastructure.hardware import Button, MotionSensor
 from infrastructure.switchbot import ColorBulb
@@ -31,8 +30,6 @@ class OriginalMotionSensor:
         color_bulb: ColorBulb,
         pir_pin: Pin,
     ) -> None:
-        self._target_mac: str = DEVICE_CONFIG["color_bulb"]["corridor_light"]["ble_mac_address"]
-
         # Infrastructure
         self._ble_connection_manager: BleConnectionManager = connection_manager
         self._motion_sensor: MotionSensor = motion_sensor

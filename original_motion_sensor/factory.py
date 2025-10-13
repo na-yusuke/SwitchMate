@@ -2,11 +2,13 @@ import bluetooth
 from machine import Pin
 
 from config import SWITCHBOT_CHARACTERISTIC_UUID, SWITCHBOT_SERVICE_UUID
-from device_config import DEVICE_CONFIG, MICROCONTROLLER_PIN_CONFIG
+from device_config import DEVICE_CONFIG
 from infrastructure.ble import BleClient, BleConnectionManager
 from infrastructure.hardware import Button, MotionSensor
 from infrastructure.switchbot import ColorBulb
 from original_motion_sensor.application import OriginalMotionSensor
+
+from .config.constants import MICROCONTROLLER_PIN_CONFIG
 
 
 def create_original_motion_sensor():
