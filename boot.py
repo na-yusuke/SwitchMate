@@ -12,6 +12,10 @@ sta_if.active(False)
 ap_if = network.WLAN(network.AP_IF)
 ap_if.active(False)
 
+# Clear RTC memory
+rtc = machine.RTC()
+rtc.memory(b"")
+
 # Configure logging
 # LogLevel.DEBUG: Show all logs (development)
 # LogLevel.INFO: Show info and above (default)

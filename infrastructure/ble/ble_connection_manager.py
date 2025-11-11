@@ -1,13 +1,3 @@
-"""
-Fast BLE reconnection wrapper for BleClient
-
-This class manages the complete BLE connection lifecycle including:
-- Fast reconnection using cached addresses
-- Connection health verification
-- Sleep preparation (disconnect + cache address info)
-- Retry logic with automatic fallback
-"""
-
 import json
 import time
 
@@ -22,21 +12,22 @@ logger = get_logger("BleConnectionManager")
 class BleConnectionManager:
     """BLE Client wrapper for fast reconnection and lifecycle management"""
 
-    def __init__(self, ble_client: BleClient, target_mac: str | None = None) -> None:
+    def __init__(self, mac_address: str, ble_client: BleClient, service_uuid: str, characteristic_uuid: str) -> None:
         """
         Initialize BleConnectionManager
 
         Args:
             ble_client: BleClient instance
-            target_mac: Target device MAC address (optional, can be set later)
         """
+        self._mac_address: str = mac_address
         self._client: BleClient = ble_client
-        self._target_mac: str | None = target_mac
         self._rtc: RTC = RTC()
 
-    def set_target_mac(self, target_mac: str) -> None:
-        """Set target MAC address"""
-        self._target_mac = target_mac
+    def disconnect_current(self) -> None:
+        """Disconnect from current device to save power"""
+        if self._client.is_connected(self._mac_address):
+            logger.debug(f"Disconnecting from {self._mac_address}")
+            self._client.disconnect(self._mac_address)
 
     def ensure_connected(self) -> bool:
         """
@@ -51,12 +42,12 @@ class BleConnectionManager:
         Returns:
             bool: True if connected successfully
         """
-        if not self._target_mac:
+        if not self._mac_address:
             logger.error("Target MAC address not set")
             return False
 
         # Already connected? Return immediately
-        if self._client.is_connected():
+        if self._client.is_connected(self._mac_address):
             logger.debug("Already connected")
             return True
 
@@ -81,7 +72,7 @@ class BleConnectionManager:
             bool: True if connection succeeded
         """
         for attempt in range(1, max_retries + 1):
-            logger.info(f"Connection attempt {attempt}/{max_retries} to {self._target_mac}")
+            logger.info(f"Connection attempt {attempt}/{max_retries} to {self._mac_address}")
 
             try:
                 if self.__connect_with_cache(scan_timeout_ms, connect_timeout_ms):
@@ -107,11 +98,11 @@ class BleConnectionManager:
         Returns:
             bool: True if connected, False otherwise
         """
-        if self._client.is_connected():
+        if self._client.is_connected(self._mac_address):
             logger.info("Already connected")
             return True
 
-        if self._client.get_addr_info() != (None, None):
+        if self._client.get_addr_info(self._mac_address) != (None, None):
             logger.debug("Trying cached address...")
             if self.__try_direct_connect(connect_timeout_ms):
                 logger.info("Connected using cache")
@@ -119,22 +110,24 @@ class BleConnectionManager:
             else:
                 logger.warning("Cache failed, falling back to scan")
 
-        logger.info(f"Scanning for {self._target_mac}...")
+        logger.info(f"Scanning for {self._mac_address}...")
         start_time = time.ticks_ms()
 
-        if not self._client.scan_for_device(self._target_mac, scan_timeout_ms):
+        if not self._client.scan_for_device(self._mac_address, scan_timeout_ms):
             logger.error("Device not found")
             return False
 
-        if not self._client.connect_to_target(connect_timeout_ms):
+        if not self._client.connect_to_target(self._mac_address, connect_timeout_ms):
             logger.error("Connection failed")
             return False
 
         logger.debug("Discovering services...")
-        self._client.discover_services()
+        if not self._client.discover_services(self._mac_address):
+            return False
 
         logger.debug("Discovering characteristics...")
-        self._client.discover_characteristics()
+        if not self._client.discover_characteristics(self._mac_address):
+            return False
 
         connect_duration = time.ticks_diff(time.ticks_ms(), start_time)
         logger.info(f"Connected in {connect_duration}ms")
@@ -156,14 +149,14 @@ class BleConnectionManager:
         self.__cache_addr_info()
 
         # Then disconnect
-        if self._client.is_connected():
+        if self._client.is_connected(self._mac_address):
             logger.info("Disconnecting BLE before sleep")
-            self._client.disconnect()
+            self._client.disconnect(self._mac_address)
 
     def __cache_addr_info(self) -> None:
         """Cache BLE address info to RTC memory for fast reconnection"""
         try:
-            addr_type, addr_str = self._client.get_addr_info()
+            addr_type, addr_str = self._client.get_addr_info(self._mac_address)
             if addr_type is not None and addr_str is not None:
                 data = json.dumps({"addr_type": addr_type, "addr_bytes": addr_str})
                 self._rtc.memory(data.encode())
@@ -191,18 +184,18 @@ class BleConnectionManager:
     def __try_direct_connect(self, timeout_ms: int) -> bool:
         """Attempt direct connection using cached address"""
         try:
-            return self._client.connect_to_target(timeout_ms)
+            return self._client.connect_to_target(self._mac_address, timeout_ms)
         except Exception as e:
             logger.error(f"Direct connect error: {e}")
             return False
 
     def is_connected(self) -> bool:
         """Check connection status"""
-        return self._client.is_connected()
+        return self._client.is_connected(self._mac_address)
 
     def disconnect(self) -> None:
         """Disconnect from the BLE device"""
-        self._client.disconnect()
+        self._client.disconnect(self._mac_address)
 
     @property
     def client(self) -> BleClient:

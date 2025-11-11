@@ -1,7 +1,3 @@
-"""
-Automation business logic
-"""
-
 import time
 
 

@@ -10,8 +10,9 @@ logger = get_logger("ColorBulb")
 
 
 class ColorBulb:
-    def __init__(self, ble_client: BleClient) -> None:
+    def __init__(self, ble_client: BleClient, mac_address: str) -> None:
         self._ble_client: BleClient = ble_client
+        self._mac_address: str = mac_address
         self._status: dict[str, bool | int | str | dict] = {
             "power_on": False,
             "brightness": 0,
@@ -21,17 +22,22 @@ class ColorBulb:
             "raw_data": "",
         }
 
+    @property
+    def mac_address(self) -> str:
+        """Return the MAC address of this bulb"""
+        return self._mac_address
+
     def power_on(self) -> bool:
         """Turn on the bulb"""
         command = bytes([0x57, 0x0F, 0x47, 0x01, 0x01])
         self._status.update(power_on=True)
-        return self._ble_client.write_characteristic(command)
+        return self._ble_client.write_characteristic(self._mac_address, command)
 
     def power_off(self) -> bool:
         """Turn off the bulb"""
         command = bytes([0x57, 0x0F, 0x47, 0x01, 0x02])
         self._status.update(power_on=False)
-        return self._ble_client.write_characteristic(command)
+        return self._ble_client.write_characteristic(self._mac_address, command)
 
     def is_powered_on(self) -> bool:
         """Return current power state"""
@@ -41,7 +47,7 @@ class ColorBulb:
         """Brightness (1-100)"""
         brightness = max(1, min(100, brightness))
         command = bytes([0x57, 0x0F, 0x47, 0x01, 0x14, brightness])
-        return self._ble_client.write_characteristic(command)
+        return self._ble_client.write_characteristic(self._mac_address, command)
 
     def sync_status(self, timeout_ms: int = 5000) -> dict[str, bool | int | str | dict] | None:
         """Read bulb status and return parsed result"""
@@ -50,12 +56,12 @@ class ColorBulb:
         logger.debug(f"Requesting status: {command.hex()}")
 
         # Send status request command
-        if not self._ble_client.write_characteristic(command):
+        if not self._ble_client.write_characteristic(self._mac_address, command):
             logger.error("Failed to send status request")
             return None
 
         # Wait for notification response
-        response_data = self._ble_client.wait_for_notification(timeout_ms)
+        response_data = self._ble_client.wait_for_notification(self._mac_address, timeout_ms)
         if response_data is None:
             logger.warning("Status sync timeout")
             return None

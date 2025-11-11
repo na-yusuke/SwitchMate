@@ -4,9 +4,7 @@ import bluetooth
 from esp32 import WAKEUP_ANY_HIGH, wake_on_ext0
 from machine import Pin, deepsleep, lightsleep
 
-from infrastructure.ble import BleConnectionManager
 from infrastructure.hardware import Button, MotionSensor
-from infrastructure.switchbot import ColorBulb
 from shared import get_logger, safe_reboot
 
 from ..config.constants import (
@@ -16,7 +14,7 @@ from ..config.constants import (
     LIGHT_SLEEP_THRESHOLD,
     POWER_ON_DURATION,
 )
-from ..domain import BulbAutomationService, SleepActivityTracker
+from ..domain import BulbAutomationService, ColorBulbManipulator, SleepActivityTracker
 
 logger = get_logger("OriginalMotionSensor")
 
@@ -24,17 +22,15 @@ logger = get_logger("OriginalMotionSensor")
 class OriginalMotionSensor:
     def __init__(
         self,
-        connection_manager: BleConnectionManager,
         motion_sensor: MotionSensor,
         button: Button,
-        color_bulb: ColorBulb,
+        color_bulb_manipulator: ColorBulbManipulator,
         pir_pin: Pin,
     ) -> None:
         # Infrastructure
-        self._ble_connection_manager: BleConnectionManager = connection_manager
         self._motion_sensor: MotionSensor = motion_sensor
         self._button: Button = button
-        self._color_bulb: ColorBulb = color_bulb
+        self._color_bulb_manager: ColorBulbManipulator = color_bulb_manipulator
         self._pir_pin: Pin = pir_pin
 
         # Business logic
@@ -50,17 +46,20 @@ class OriginalMotionSensor:
     def __button_pressed_callback(self) -> None:
         safe_reboot()
 
-    def setup_ble_connection(self) -> bool:
-        if self._ble_connection_manager.ensure_connected():
-            return True
+    def setup_connections(self) -> bool:
+        """
+        Setup BLE connections to all bulbs
 
-        return False
+        Returns:
+            bool: True if all connections succeeded
+        """
+        logger.info("Setting up connections to all bulbs")
+        return self._color_bulb_manager.connect_all()
 
     def disconnect_ble(self) -> None:
-        if self._ble_connection_manager.is_connected():
-            logger.info("Disconnecting BLE to save power")
-            self._ble_connection_manager.disconnect()
-            logger.info("BLE disconnected")
+        """Disconnect from all bulbs to save power"""
+        logger.info("Disconnecting from all bulbs")
+        self._color_bulb_manager.disconnect_all()
 
     def run(self) -> None:
         """loop logic"""
@@ -83,50 +82,41 @@ class OriginalMotionSensor:
 
     def __check_auto_power_off(self) -> None:
         """
-        Check if bulb should auto power off
+        Check if bulbs should auto power off
         """
-        if not self._color_bulb.is_powered_on():
+        if not self._color_bulb_manager.is_any_powered_on():
             return
 
         if not self._bulb_automation_service.should_power_off_bulb():
             return
 
-        if not self._ble_connection_manager.ensure_connected():
-            return
-
-        logger.debug("Bulb powered off due to elapsed time")
-        self._color_bulb.power_off()
-        logger.debug("Bulb powered off successfully")
+        logger.debug("Bulbs powered off due to elapsed time")
+        self._color_bulb_manager.power_off_all()
+        logger.debug("Bulbs powered off successfully")
 
         self._bulb_automation_service.reset_power_on_time()
 
     def __handle_motion_detected(self) -> None:
-        if not self._ble_connection_manager.ensure_connected():
-            logger.error("Cannot control bulb - connection failed")
-            return
-
-        if not self._color_bulb.is_powered_on():
-            logger.debug("Bulb powered on by motion detection")
+        if not self._color_bulb_manager.is_any_powered_on():
+            logger.debug("Bulbs powered on by motion detection")
             self._bulb_automation_service.record_last_power_on_time()
-            self._color_bulb.power_on()
-            logger.debug("Bulb powered on successfully")
+            self._color_bulb_manager.power_on_all()
+            logger.debug("Bulbs powered on successfully")
 
     def __sync_bulb_status(self) -> None:
         if not self._bulb_automation_service.should_get_bulb_status():
             return
 
-        logger.debug("Syncing bulb status")
+        logger.debug("Syncing bulbs status")
         self._bulb_automation_service.record_last_check_status_time()
-        if self._color_bulb.sync_status() is None:
-            logger.warning("Failed to sync bulb status")
-            return
-        logger.debug("Bulb status synced successfully")
+        self._color_bulb_manager.sync_status_all()
+        logger.debug("Bulbs status synced successfully")
 
     def __enter_light_sleep(self) -> None:
         """Enter light sleep mode (wake on GPIO interrupt)"""
         logger.info("No activity detected for a while, entering light sleep)")
 
-        self._ble_connection_manager.prepare_for_sleep()
+        self._color_bulb_manager.prepare_for_sleep()
 
         # Waiting for motion sensor to go low
         while self._pir_pin.value() == 1:
@@ -140,7 +130,7 @@ class OriginalMotionSensor:
         """Enter deep sleep mode"""
         logger.info("No activity detected for a while, entering deep sleep")
 
-        self._ble_connection_manager.prepare_for_sleep()
+        self._color_bulb_manager.prepare_for_sleep()
 
         # Waiting for motion sensor to go low
         while self._pir_pin.value() == 1:

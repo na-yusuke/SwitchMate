@@ -1,7 +1,3 @@
-"""
-Activity tracking for sleep management
-"""
-
 import time
 
 
