@@ -1,4 +1,3 @@
-import json
 import time
 
 from machine import RTC
@@ -50,9 +49,6 @@ class BleConnectionManager:
         if self._client.is_connected(self._mac_address):
             logger.debug("Already connected")
             return True
-
-        # Restore cached address from RTC memory
-        self.__restore_addr_cache()
 
         # Attempt connection with retry
         return self.__connect_with_retry()
@@ -134,53 +130,6 @@ class BleConnectionManager:
 
         return True
 
-    def prepare_for_sleep(self) -> None:
-        """
-        Prepare for entering sleep mode
-
-        This method should be called before entering light sleep or deep sleep.
-        It will:
-        1. Cache the current BLE address to RTC memory for fast reconnection
-        2. Disconnect the BLE connection cleanly
-
-        After waking from sleep, call ensure_connected() to reconnect.
-        """
-        # Cache address info to RTC memory first
-        self.__cache_addr_info()
-
-        # Then disconnect
-        if self._client.is_connected(self._mac_address):
-            logger.info("Disconnecting BLE before sleep")
-            self._client.disconnect(self._mac_address)
-
-    def __cache_addr_info(self) -> None:
-        """Cache BLE address info to RTC memory for fast reconnection"""
-        try:
-            addr_type, addr_str = self._client.get_addr_info(self._mac_address)
-            if addr_type is not None and addr_str is not None:
-                data = json.dumps({"addr_type": addr_type, "addr_bytes": addr_str})
-                self._rtc.memory(data.encode())
-                logger.debug("Cached BLE address info to RTC memory")
-        except Exception as e:
-            logger.error(f"Failed to cache address info: {e}")
-
-    def __restore_addr_cache(self) -> None:
-        """Restore BLE address info from RTC memory"""
-        try:
-            mem = self._rtc.memory()
-            if not mem:
-                return
-
-            data = json.loads(mem.decode())
-            addr_type = data.get("addr_type")
-            addr_bytes = data.get("addr_bytes")
-
-            if addr_type is not None and addr_bytes is not None:
-                self._client.restore_addr_info(addr_type, addr_bytes)
-                logger.info("Restored BLE address info from RTC memory")
-        except Exception as e:
-            logger.error(f"Failed to restore address info: {e}")
-
     def __try_direct_connect(self, timeout_ms: int) -> bool:
         """Attempt direct connection using cached address"""
         try:
@@ -199,5 +148,8 @@ class BleConnectionManager:
 
     @property
     def client(self) -> BleClient:
-        """Access the underlying BleClient instance"""
         return self._client
+
+    @property
+    def mac_address(self) -> str:
+        return self._mac_address

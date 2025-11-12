@@ -414,35 +414,53 @@ class BleClient:
             return (None, None)
         return addr_type, self.__addr_to_str(addr_bytes)
 
-    def restore_addr_info(self, addr_type: int, addr_str: str) -> bool:
+    def restore_addr_info(self, mac_address: str, restore_data: dict) -> bool:
         """
-        Restore device address information from cached values
+        Restore device connection information from cached data
 
         This method is used to restore connection information after sleep/wake cycles
         without requiring a new device scan.
 
         Args:
-            addr_type: BLE address type (0 for public, 1 for random)
-            addr_str: MAC address string in format "aa:bb:cc:dd:ee:ff"
+            restore_data: Dictionary containing device restoration data with keys:
+                - addr_bytes (str): MAC address string in format "aabbccddeeff"
+                - addr_type (int): BLE address type (0 for public, 1 for random)
+                - conn_handle (int): Connection handle
+                - start_handle (int): Service start handle
+                - end_handle (int): Service end handle
+                - char_handle (int): Characteristic handle
 
         Returns:
-            bool: True if address was successfully restored, False if invalid format or error occurred
+            bool: True if address was successfully restored, False if invalid data or error occurred
         """
         try:
-            addr_bytes = bytes(int(b, 16) for b in addr_str.split(":"))
-            if len(addr_bytes) == 6:
-                mac_address = addr_str.lower()
-                self.__init_device(mac_address)
-                self._devices[mac_address]["addr_type"] = addr_type
-                self._devices[mac_address]["addr_bytes"] = addr_bytes
-                self._devices[mac_address]["is_found"] = True
-                logger.info(f"Restored address: {addr_str}, type: {addr_type}")
-                return True
-            else:
-                logger.error("Invalid address format")
+            addr_bytes = restore_data.get("addr_bytes")
+            if not addr_bytes or len(addr_bytes) != 6:
+                logger.error(f"Invalid address format: expected 6 bytes, got {len(addr_bytes) if addr_bytes else 0}")
+                return False
+
+            # Initialize device entry
+            self.__init_device(mac_address)
+
+            # Restore device state
+            device = self._devices[mac_address]
+            device["conn_handle"] = restore_data.get("conn_handle")
+            device["start_handle"] = restore_data.get("start_handle")
+            device["end_handle"] = restore_data.get("end_handle")
+            device["char_handle"] = restore_data.get("char_handle")
+            device["addr_type"] = restore_data.get("addr_type")
+            device["addr_bytes"] = addr_bytes
+            device["is_found"] = True
+
+            logger.info(f"Restored device: {mac_address}")
+            return True
+
+        except ValueError as e:
+            logger.error(f"Invalid MAC address format: {e}")
+            return False
         except Exception as e:
             logger.error(f"Error restoring address: {e}")
-        return False
+            return False
 
     def get_target_data(self, target_mac_address: str) -> bytes | None:
         """

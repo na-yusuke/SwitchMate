@@ -21,6 +21,7 @@ def create_original_motion_sensor():
         bluetooth.UUID(SWITCHBOT_SERVICE_UUID),
         bluetooth.UUID(SWITCHBOT_CHARACTERISTIC_UUID),
     )
+    connection_pool.restore_addr_cache()
 
     # Create ColorBulb instances for each target device
     color_bulbs = []
@@ -33,8 +34,7 @@ def create_original_motion_sensor():
         # Add device to connection pool
         connection_pool.add_device(mac_address)
 
-        client = connection_pool.get_client()
-        color_bulbs.append(ColorBulb(client, mac_address))
+        color_bulbs.append(ColorBulb(connection_pool.ble_client, mac_address))
 
     # Create ColorBulbManipulator with connection pool
     color_bulb_manipulator = ColorBulbManipulator(color_bulbs, connection_pool)
