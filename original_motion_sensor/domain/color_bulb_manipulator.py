@@ -18,7 +18,6 @@ class ColorBulbManipulator:
         """
         self._bulbs: list[ColorBulb] = bulbs
         self._connection_pool: BleConnectionPool = connection_pool
-        self._bulb_map: dict[str, ColorBulb] = {bulb.mac_address: bulb for bulb in bulbs}
 
     def connect_all(self) -> bool:
         """

@@ -61,6 +61,12 @@ class OriginalMotionSensor:
         logger.info("Disconnecting from all bulbs")
         self._color_bulb_manipulator.disconnect_all()
 
+    def power_on_bulbs_on_wakeup(self) -> None:
+        """Power on bulbs after waking from deep sleep"""
+        logger.info("Power on bulbs after deep sleep wakeup")
+        self._color_bulb_manipulator.power_on_all()
+        self._bulb_automation_service.record_last_power_on_time()
+
     def run(self) -> None:
         """loop logic"""
 

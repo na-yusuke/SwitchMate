@@ -1,4 +1,5 @@
 import bluetooth
+import machine
 from machine import Pin
 
 from config import SWITCHBOT_CHARACTERISTIC_UUID, SWITCHBOT_SERVICE_UUID
@@ -21,7 +22,8 @@ def create_original_motion_sensor():
         bluetooth.UUID(SWITCHBOT_SERVICE_UUID),
         bluetooth.UUID(SWITCHBOT_CHARACTERISTIC_UUID),
     )
-    connection_pool.restore_addr_cache()
+    if machine.reset_cause() == machine.DEEPSLEEP_RESET:
+        connection_pool.restore_addr_cache()
 
     # Create ColorBulb instances for each target device
     color_bulbs = []

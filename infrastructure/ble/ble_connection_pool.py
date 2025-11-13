@@ -44,6 +44,23 @@ class BleConnectionPool:
         self._connections[target_mac_address] = connection_manager
         logger.info(f"Added device {target_mac_address} to connection pool")
 
+    def connect_all(self) -> dict[str, bool]:
+        """
+        Connect to all devices in the pool
+
+        Returns:
+            dict: Mapping of MAC address to connection success status
+        """
+        results = {}
+        logger.info(f"Connecting to {len(self._connections)} devices")
+
+        for mac_address in self._connections.keys():
+            results[mac_address] = self.ensure_connected(mac_address)
+
+        successful = sum(1 for success in results.values() if success)
+        logger.info(f"Connected to {successful}/{len(self._connections)} devices")
+        return results
+
     def ensure_connected(self, target_mac_address: str) -> bool:
         """
         Ensure connection to a specific device
@@ -60,23 +77,13 @@ class BleConnectionPool:
 
         return connection_manager.ensure_connected()
 
-    def connect_all(self) -> dict[str, bool]:
-        """
-        Connect to all devices in the pool
+    def disconnect_all(self) -> None:
+        """Disconnect from all devices"""
+        active_connections = self.get_active_connections()
+        logger.info(f"Disconnecting from {len(active_connections)} active connections")
 
-        Returns:
-            dict: Mapping of MAC address to connection success status
-        """
-        results = {}
-        logger.info(f"Connecting to {len(self._connections)} devices")
-
-        for mac_address in self._connections.keys():
-            results[mac_address] = self.ensure_connected(mac_address)
-
-        successful = sum(1 for success in results.values() if success)
-        logger.info(f"Connected to {successful}/{len(self._connections)} devices")
-
-        return results
+        for mac_address in active_connections:
+            self.disconnect(mac_address)
 
     def disconnect(self, target_mac_address: str) -> None:
         """
@@ -91,14 +98,6 @@ class BleConnectionPool:
 
         self._connections.get(target_mac_address).disconnect()
         logger.debug(f"Disconnected from {target_mac_address}")
-
-    def disconnect_all(self) -> None:
-        """Disconnect from all devices"""
-        active_connections = self.get_active_connections()
-        logger.info(f"Disconnecting from {len(active_connections)} active connections")
-
-        for mac_address in active_connections:
-            self.disconnect(mac_address)
 
     def is_connected(self, target_mac_address: str) -> bool:
         """
@@ -177,7 +176,7 @@ class BleConnectionPool:
                     "end_handle": device["end_handle"],
                     "char_handle": device["char_handle"],
                     "addr_type": device["addr_type"],
-                    "addr_bytes": device["addr_bytes"],
+                    "addr_bytes": list(device["addr_bytes"]),
                 }
 
                 # Disconnect if currently connected
@@ -266,7 +265,7 @@ class BleConnectionPool:
             "end_handle": device_data["end_handle"],
             "char_handle": device_data["char_handle"],
             "addr_type": device_data["addr_type"],
-            "addr_bytes": device_data["addr_bytes"],
+            "addr_bytes": bytes(device_data["addr_bytes"]),
         }
 
         # Restore to BLE client

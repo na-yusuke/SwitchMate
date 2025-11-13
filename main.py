@@ -1,3 +1,5 @@
+import machine
+
 from original_motion_sensor.factory import create_original_motion_sensor
 from shared import get_logger
 
@@ -13,6 +15,11 @@ def setup():
         logger.error("Failed to setup BLE connections to all bulbs")
         return
     logger.info("Application initialized successfully - all bulbs connected")
+
+    # After waking up from DeepSleep, turn on the color bulb
+    if machine.reset_cause() == machine.DEEPSLEEP_RESET:
+        logger.info("Woke up from deep sleep")
+        app.power_on_bulbs_on_wakeup()
 
 
 def loop():

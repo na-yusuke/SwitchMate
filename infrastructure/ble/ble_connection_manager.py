@@ -77,6 +77,8 @@ class BleConnectionManager:
             except Exception as e:
                 logger.warning(f"Attempt {attempt} failed: {e}")
 
+            # Init device cache when connection failed
+            self._client.pop_device(self._mac_address)
             if attempt < max_retries:
                 time.sleep_ms(1000)  # Wait 1 second before retry
 

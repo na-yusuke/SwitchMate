@@ -194,6 +194,9 @@ class BleClient:
             },
         )
 
+    def pop_device(self, target_mac_address: str) -> dict:
+        return self._devices.pop(target_mac_address, {})
+
     def scan_for_device(self, target_mac_address: str, duration_ms: int = 10000) -> bool:
         """Scan for device with specific MAC address"""
         target_mac_address_lower = target_mac_address.lower()
