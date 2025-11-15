@@ -65,7 +65,7 @@ class OriginalMotionSensor:
         """Power on bulbs after waking from deep sleep"""
         logger.info("Power on bulbs after deep sleep wakeup")
         self._color_bulb_manipulator.power_on_all()
-        self._bulb_automation_service.record_last_power_on_time()
+        self._bulb_automation_service.record_last_motion_detected_time()
 
     def run(self) -> None:
         """loop logic"""
@@ -100,12 +100,14 @@ class OriginalMotionSensor:
         self._color_bulb_manipulator.power_off_all()
         logger.debug("Bulbs powered off successfully")
 
-        self._bulb_automation_service.reset_power_on_time()
+        self._bulb_automation_service.reset_motion_detected_time()
 
     def __handle_motion_detected(self) -> None:
+        # Always record motion detection time to reset the auto-off timer
+        self._bulb_automation_service.record_last_motion_detected_time()
+
         if not self._color_bulb_manipulator.is_any_powered_on():
             logger.debug("Bulbs powered on by motion detection")
-            self._bulb_automation_service.record_last_power_on_time()
             self._color_bulb_manipulator.power_on_all()
             logger.debug("Bulbs powered on successfully")
 
