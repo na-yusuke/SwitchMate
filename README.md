@@ -45,6 +45,31 @@ $ git clone git@github.com:na-yusuke/SwitchMate.git
 ### 3. Install MicroPico Extension (if using VSCode)
 
 - Follow this instructions: [Getting started](https://github.com/paulober/MicroPico?tab=readme-ov-file#getting-started)
+- Add the following settings in `setting.json` to prevent unnecessary files from being uploaded to the device:
+
+```json
+{
+    "micropico.pyIgnore": [
+        "**/.claude",
+        "**/.DS_Store",
+        "**/.git",
+        "**/.gitignore",
+        "**/.idea",
+        "**/.micropico",
+        "**/.picowgo",
+        "**/.venv",
+        "**/.vscode",
+        "**/docs",
+        "**/env",
+        "**/node_modules",
+        "**/package-lock.json",
+        "**/package.json",
+        "**/project.pico-go",
+        "**/resources",
+        "**/venv"
+    ]
+}
+```
 
 ### 4. Configuration
 

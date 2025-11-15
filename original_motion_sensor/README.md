@@ -50,34 +50,10 @@ target_mac = DEVICE_CONFIG["color_bulb"]["<your_device_name>"]["ble_mac_address"
 ### 3. Upload
 
 - To upload the program, run `MicroPico: Upload project to Pico`
-- Add the following settings in `setting.json` to prevent unnecessary files from being uploaded to the device:
-
-```json
-{
-    "micropico.pyIgnore": [
-        "**/.picowgo",
-        "**/.micropico",
-        "**/.vscode",
-        "**/.gitignore",
-        "**/.git",
-        "**/.DS_Store",
-        "**/project.pico-go",
-        "**/env",
-        "**/venv",
-        "**/.venv",
-        "**/.idea",
-        "**/node_modules",
-        "**/resources",
-        "**/docs",
-        "**/package.json",
-        "**/package-lock.json"
-    ]
-}
-```
 
 ### 4. Launch
 
-- To run the program, run `MicroPico: Run current file on Pico` in the `main.py`
+- To run the program, run `MicroPico: Run current file on Pico` in the `boot.py`
 
 ## 🎮 Usage
 
