@@ -89,4 +89,4 @@ Basically, it works well, but a detectable distance of the motion sensor is very
 Actually, it can detect an object within 3 meters (the nominal value is within 7 meters).  
 It is not enough distance even in my apartment's corridor.  
 Thats' why, I started developing the original motion sensor instead of the official product.  
-By implementing sleep mode, I realized sufficient detection distance while also considering battery-powered operation.  
+By implementing sleep mode, I realized sufficient detection distance (almost 7 meters) while also considering battery-powered operation.  
