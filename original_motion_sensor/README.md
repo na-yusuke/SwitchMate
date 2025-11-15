@@ -2,6 +2,8 @@
 
 Original motion sensor that collaborates with [SwitchBot color bulb](https://www.switchbot.jp/products/switchbot-color-bulb?currency=JPY&variant=40971840487599&stkn=85ef6db07253&gad_campaignid=20344892290) instead of [Official motion sensor](https://www.switchbot.jp/products/switchbot-motion-sensor).
 
+<https://github.com/user-attachments/assets/f991070d-5b98-4c3d-b732-5fd66a8a63b0>
+
 ## 🌍 Environment
 
 ### Hardware Requirements
@@ -90,3 +92,4 @@ Actually, it can detect an object within 3 meters (the nominal value is within 7
 It is not enough distance even in my apartment's corridor.  
 Thats' why, I started developing the original motion sensor instead of the official product.  
 By implementing sleep mode, I realized sufficient detection distance (almost 7 meters) while also considering battery-powered operation.  
+
