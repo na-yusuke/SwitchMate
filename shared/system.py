@@ -15,10 +15,10 @@ def reboot(delay_sec: int = 0) -> None:
         delay_sec: Delay in seconds before rebooting. Default is 0 (immediate reboot).
     """
     if delay_sec > 0:
-        logger.warning(f"Rebooting in {delay_sec} seconds...")
+        logger.error(f"Rebooting in {delay_sec} seconds...")
         time.sleep(delay_sec)
 
-    logger.warning("Rebooting now...")
+    logger.error("Rebooting now...")
     machine.reset()
 
 

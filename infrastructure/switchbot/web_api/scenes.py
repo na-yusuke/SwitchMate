@@ -29,14 +29,14 @@ class SceneApi(BaseApi):
             return
 
         body = scenes_data["body"]
-        logger.info("=== SwitchBot Scenes ===")
 
         if isinstance(body, list):
+            scenes_list = []
             for scene in body:
-                logger.info(f"- {scene.get('sceneName', 'Unknown')}")
-                logger.info(f"  ID: {scene.get('sceneId', 'Unknown')}")
-                logger.info()
+                scene_name = scene.get("sceneName", "Unknown")
+                scene_id = scene.get("sceneId", "Unknown")
+                scenes_list.append(f"{scene_name} (ID: {scene_id})")
+
+            logger.debug(f"SwitchBot Scenes: {', '.join(scenes_list)}")
         else:
             logger.warning("No scenes found")
-
-        logger.info("========================")

@@ -111,13 +111,15 @@ class ColorBulb:
             logger.warning("No status data available")
             return
 
-        logger.info("=== Color Bulb Status ===")
         power_state = "ON" if self._status.get("power_on") else "OFF"
-        logger.info(f"Power: {power_state}")
-        logger.info(f"Brightness: {self._status.get('brightness')}%")
         rgb = self._status.get("rgb", {})
-        logger.info(f"RGB Color: R={rgb.get('red')}, G={rgb.get('green')}, B={rgb.get('blue')}")
-        logger.info(f"Color Temperature: {self._status.get('color_temperature')}K")
-        logger.info(f"Mode: 0x{self._status.get('mode'):06X}")
-        logger.info(f"Raw Data: {self._status.get('raw_data')}")
-        logger.info("========================")
+        status_msg = (
+            f"Color Bulb Status: "
+            f"Power={power_state}, "
+            f"Brightness={self._status.get('brightness')}%, "
+            f"RGB=({rgb.get('red')},{rgb.get('green')},{rgb.get('blue')}), "
+            f"ColorTemp={self._status.get('color_temperature')}K, "
+            f"Mode=0x{self._status.get('mode'):06X}, "
+            f"RawData={self._status.get('raw_data')}"
+        )
+        logger.debug(status_msg)

@@ -34,7 +34,7 @@ def connect_wifi(ssid, password, timeout_ms=10000):
 
     if wlan.isconnected():
         logger.info("Already connected to Wi-Fi")
-        logger.info("Network config:", wlan.ifconfig())
+        logger.info(f"Network config: {wlan.ifconfig()}")
         return True
 
     logger.info("Connecting to Wi-Fi...")
@@ -46,8 +46,8 @@ def connect_wifi(ssid, password, timeout_ms=10000):
             logger.error("Wi-Fi connection timeout")
             return False
         time.sleep(0.5)
-        logger.info(".", end="")
+        logger.debug(".")
 
     logger.info("\nWi-Fi connected successfully!")
-    logger.info("Network config:", wlan.ifconfig())
+    logger.info(f"Network config: {wlan.ifconfig()}")
     return True
