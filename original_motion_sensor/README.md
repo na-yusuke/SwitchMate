@@ -35,7 +35,11 @@ ESP32:
 
 ## 🚀 Setup
 
-### 1. Register SwitchBot product
+### 1. Initial setup
+
+- In advance, you must complete the setup according to [Setup](/README.md#-setup).
+
+### 2. Register SwitchBot product
 
 - If you register original device names in `device_config.py`, update `original_motion_sensor/factory.py`
 
@@ -43,11 +47,37 @@ ESP32:
 target_mac = DEVICE_CONFIG["color_bulb"]["<your_device_name>"]["ble_mac_address"]
 ```
 
-### 2. Launch
+### 3. Upload
 
-- In advance, you must complete the setup according to [Setup](/README.md#-setup).
-- Once reset, the ESP32 will automatically execute `boot.py` followed by `main.py`.
-- You can monitor the output using a terminal.
+- To upload the program, run `MicroPico: Upload project to Pico`
+- Add the following settings in `setting.json` to prevent unnecessary files from being uploaded to the device:
+
+```json
+{
+    "micropico.pyIgnore": [
+        "**/.picowgo",
+        "**/.micropico",
+        "**/.vscode",
+        "**/.gitignore",
+        "**/.git",
+        "**/.DS_Store",
+        "**/project.pico-go",
+        "**/env",
+        "**/venv",
+        "**/.venv",
+        "**/.idea",
+        "**/node_modules",
+        "**/resources",
+        "**/docs",
+        "**/package.json",
+        "**/package-lock.json"
+    ]
+}
+```
+
+### 4. Launch
+
+- To run the program, run `MicroPico: Run current file on Pico` in the `main.py`
 
 ## 🎮 Usage
 

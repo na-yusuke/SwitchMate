@@ -1,7 +1,8 @@
 import machine
+import network
 
 from original_motion_sensor.factory import create_original_motion_sensor
-from shared import get_logger
+from shared import LogLevel, configure, get_logger
 
 original_motion_sensor = create_original_motion_sensor()
 
@@ -10,6 +11,26 @@ logger = get_logger("main")
 
 
 def setup():
+    # Downclock the CPU frequency to 80MHz for power saving
+    machine.freq(80000000)
+
+    # Disable Wi-Fi completely for power saving
+    sta_if = network.WLAN(network.STA_IF)
+    sta_if.active(False)
+    ap_if = network.WLAN(network.AP_IF)
+    ap_if.active(False)
+
+    # Clear RTC memory
+    if machine.reset_cause() == machine.PWRON_RESET:
+        rtc = machine.RTC()
+        rtc.memory(b"")
+
+    # Configure logging
+    # LogLevel.DEBUG: Show all logs (development)
+    # LogLevel.INFO: Show info and above (default)
+    # LogLevel.WARNING: Show warnings and above (production)
+    configure(level=LogLevel.DEBUG)
+
     # Setup BLE connections to all bulbs
     if not app.setup_connections():
         logger.error("Failed to setup BLE connections to all bulbs")

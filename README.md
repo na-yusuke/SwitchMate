@@ -14,7 +14,7 @@ Each project has specific requirements in addition to the following, so please r
   - MicroPython v1.26.1
 - IDE
   - VSCode (Recommended)
-  - [Pymakr](https://marketplace.visualstudio.com/items?itemName=pycom.pymakr-preview)
+  - [MicroPico](https://marketplace.visualstudio.com/items?itemName=paulober.pico-w-go)
 
 ## 🚀 Setup
 
@@ -42,9 +42,9 @@ or
 $ git clone git@github.com:na-yusuke/SwitchMate.git
 ```
 
-### 3. Install Pymakr Extension (if using VSCode)
+### 3. Install MicroPico Extension (if using VSCode)
 
-- Follow this instructions: [Pymakr Installation Guide](https://developer.mamezou-tech.com/iot/internet-of-things-20/#pymakr%E3%81%A7%E3%81%AE%E9%96%8B%E7%99%BA)
+- Follow this instructions: [Getting started](https://github.com/paulober/MicroPico?tab=readme-ov-file#getting-started)
 
 ### 4. Configuration
 
@@ -89,21 +89,7 @@ DEVICE_CONFIG = {
 }
 ```
 
-### 4. Upload Code to ESP32
-
-1. Check `pymakr.conf` in VSCode:
-
-    ```json
-    {
-        "address": "COM7",  // Change to your serial port
-        "sync_folder": "./"
-    }
-    ```
-
-1. Upload code using Pymakr
-    - If you use Pymakr, the code between VSCode and ESP32 will be synchronized automatically.
-
-### 5. Each project setting
+### 4. Each project setting
 
 - Once complete the setup, proceed to the setup for each project.
 
@@ -120,3 +106,4 @@ DEVICE_CONFIG = {
 - [IoT を使ってみる（その２０：MicroPythonで始めるESP32プログラミング「超」入門）](https://developer.mamezou-tech.com/iot/internet-of-things-20/)
 - [SwitchBot BLE API](https://github.com/OpenWonderLabs/SwitchBotAPI-BLE)
 - [SwitchBot API v1.1](https://github.com/OpenWonderLabs/SwitchBotAPI)
+- [MicroPico](https://github.com/paulober/MicroPico)
