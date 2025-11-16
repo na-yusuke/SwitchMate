@@ -107,7 +107,7 @@ $ cp device_config.example.py device_config.py
 DEVICE_CONFIG = {
     "color_bulb": {
         "<your_device_name>": {
-            "name": "<your_device_name>",
+            "name": "<Your Device Name>",
             "ble_mac_address": "XX:XX:XX:XX:XX:XX",
         },
     }

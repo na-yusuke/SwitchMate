@@ -43,10 +43,10 @@ ESP32:
 
 ### 2. Register SwitchBot product
 
-- If you register original device names in `device_config.py`, update `original_motion_sensor/factory.py`
+- If you register original device names in `device_config.py`, update `original_motion_sensor/config/constants.py`
 
 ```python
-target_mac = DEVICE_CONFIG["color_bulb"]["<your_device_name>"]["ble_mac_address"]
+TARGET_COLOR_BULBS = ["<your_device_name1", "your_device_name2", ...]
 ```
 
 ### 3. Upload
@@ -88,8 +88,7 @@ target_mac = DEVICE_CONFIG["color_bulb"]["<your_device_name>"]["ble_mac_address"
 
 I bought [SwitchBot Color Bulb](https://www.switchbot.jp/products/switchbot-color-bulb) to automate a home lighting system with [Official motion sensor](https://www.switchbot.jp/products/switchbot-motion-sensor).  
 Basically, it works well, but a detectable distance of the motion sensor is very short against the nominal value.  
-Actually, it can detect an object within 3 meters (the nominal value is within 7 meters).  
+Actually, it can detect an object within 3 meters (the maximum nominal value is within 7 to 9 meters).  
 It is not enough distance even in my apartment's corridor.  
 Thats' why, I started developing the original motion sensor instead of the official product.  
 By implementing sleep mode, I realized sufficient detection distance (almost 7 meters) while also considering battery-powered operation.  
-
